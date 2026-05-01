@@ -1,0 +1,93 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go binaries (no extension on Unix-like systems)
+/main
+/cmd/main
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment variables
+.env
+.env.*
+!.env.default
+!.env.dev.example
+!.env.example
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+bin/
+*.wasm
+
+# Release assets are generated in CI and published on GitHub Releases
+cmd/executables/
+**/manifest.json
+
+# Logs
+*.log
+
+# Deployment artifacts
+.deploy/**/*.json
+
+# Archives (typically shouldn't be committed)
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Certificates & private keys (NEVER commit these)
+*.key
+*.pem
+*.p12
+*.pfx
+!*.pub
+
+# Docker volumes/data
+*-data/
+
+# Compiled/minified assets (should be built, not committed)
+*.min.js
+*.min.css
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Lefthook local overrides
+lefthook-local.yml
