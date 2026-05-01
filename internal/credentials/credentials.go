@@ -6,27 +6,33 @@ import (
 	"strings"
 )
 
-type APITokenCredentials struct {
-	APIKey string `json:"api_key,omitempty"`
-	Token  string `json:"token,omitempty"`
+type apiKeyCredentials struct {
+	APIKey string `json:"api_key"`
 }
 
-func ParseAPIToken(raw json.RawMessage) (string, error) {
+func ExtractToken(raw json.RawMessage) (string, error) {
 	if len(raw) == 0 {
 		return "", fmt.Errorf("api key credentials are required")
 	}
 
-	var credentials APITokenCredentials
+	var credentials apiKeyCredentials
 	if err := json.Unmarshal(raw, &credentials); err != nil {
 		return "", fmt.Errorf("decode api key credentials: %w", err)
 	}
 
-	if token := strings.TrimSpace(credentials.Token); token != "" {
-		return token, nil
-	}
-	if apiKey := strings.TrimSpace(credentials.APIKey); apiKey != "" {
-		return apiKey, nil
+	token := strings.TrimSpace(credentials.APIKey)
+	if token == "" {
+		return "", fmt.Errorf("api_key is required")
 	}
 
-	return "", fmt.Errorf("token or api_key is required")
+	return token, nil
+}
+
+func GetBearerAuthorizationHeaderValue(value string) (string, error) {
+	token := strings.TrimSpace(value)
+	if token == "" {
+		return "", fmt.Errorf("token is required")
+	}
+
+	return "Bearer " + token, nil
 }

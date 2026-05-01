@@ -6,6 +6,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fgrzl/claims v0.1.0 h1:SW0e8c1VJ10tzm0l3/tYktNvbK0mxGMvQI5Hve3Qxgc=
 github.com/fgrzl/claims v0.1.0/go.mod h1:uQv82RYxqTXNdPjraojNakIZHA2fsYsMUIoiYeS51IA=
+github.com/fgrzl/enumerators v1.0.0 h1:gpdX86ZaK95EogTICr/3lFrC57BdMeKjd1wnmM1NSNQ=
+github.com/fgrzl/enumerators v1.0.0/go.mod h1:feeP9+rknaUYQ8TQwycW1lLX9JdOrWRgr22pu1j5lP4=
 github.com/fgrzl/es v1.0.0 h1:kS6cHOPeKc8DVhNiPDjIIBLyG0IRpvnBSE/8mrkHle4=
 github.com/fgrzl/es v1.0.0/go.mod h1:EYKVXSMTeFzRoN2cyhC/QbE3rFwW5r1NfL6IKCaW/F8=
 github.com/fgrzl/json v1.0.0 h1:ZCTSbZq3077eP/grt+H71TFoI/Ac8TMSgo0nI/gXNFE=
@@ -65,6 +67,8 @@ go.opentelemetry.io/proto/otlp v1.10.0 h1:IQRWgT5srOCYfiWnpqUYz9CVmbO8bFmKcwYxpu
 go.opentelemetry.io/proto/otlp v1.10.0/go.mod h1:/CV4QoCR/S9yaPj8utp3lvQPoqMtxXdzn7ozvvozVqk=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
+golang.org/x/exp v0.0.0-20260112195511-716be5621a96 h1:Z/6YuSHTLOHfNFdb8zVZomZr7cqNgTJvA8+Qz75D8gU=
+golang.org/x/exp v0.0.0-20260112195511-716be5621a96/go.mod h1:nzimsREAkjBCIEFtHiYkrJyT+2uy9YZJB7H1k68CXZU=
 golang.org/x/net v0.53.0 h1:d+qAbo5L0orcWAr0a9JweQpjXF19LMXJE8Ey7hwOdUA=
 golang.org/x/net v0.53.0/go.mod h1:JvMuJH7rrdiCfbeHoo3fCQU24Lf5JJwT9W3sJFulfgs=
 golang.org/x/sys v0.43.0 h1:Rlag2XtaFTxp19wS8MXlJwTvoh8ArU6ezoyFsMyCTNI=

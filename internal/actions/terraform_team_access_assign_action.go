@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-hashicorp/internal/payloads"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
@@ -18,6 +19,7 @@ func NewTerraformTeamAccessAssignAction(
 }
 
 type TerraformTeamAccessAssignAction struct {
+	token string
 	*connector.TypedFeatureContext[*options.TerraformTeamAccessAssignActionOptions, *payloads.TerraformTeamAccessAssignPayload]
 }
 
@@ -30,6 +32,11 @@ func (a *TerraformTeamAccessAssignAction) Init(ctx context.Context) error {
 	} else if err := payload.Validate(); err != nil {
 		return fmt.Errorf("invalid terraform team access assign payload: %w", err)
 	}
+	token, err := credentials.ExtractToken(a.GetCredentials())
+	if err != nil {
+		return fmt.Errorf("parse api key credentials: %w", err)
+	}
+	a.token = token
 	logAction(ctx, a.TypedFeatureContext, slog.LevelInfo, "Initialized HCP Terraform team access assign action")
 	return nil
 }

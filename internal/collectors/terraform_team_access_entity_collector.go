@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
@@ -17,11 +18,21 @@ func NewTerraformTeamAccessEntityCollector(
 }
 
 type TerraformTeamAccessEntityCollector struct {
+	token string
 	*connector.TypedFeatureContext[*options.TerraformTeamAccessEntityCollectorOptions, *connector.NoPayload]
 }
 
 func (c *TerraformTeamAccessEntityCollector) Init(_ context.Context) error {
-	return options.ValidateTerraformOptions(c.GetOptions())
+	if err := options.ValidateTerraformOptions(c.GetOptions()); err != nil {
+		return err
+	}
+	token, err := credentials.ExtractToken(c.GetCredentials())
+	if err != nil {
+		return fmt.Errorf("parse api key credentials: %w", err)
+	}
+	c.token = token
+
+	return nil
 }
 
 func (c *TerraformTeamAccessEntityCollector) Start(ctx context.Context) error {
