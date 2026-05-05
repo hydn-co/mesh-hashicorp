@@ -1,5 +1,7 @@
 package api
 
+import "encoding/json"
+
 type vaultListResponse struct {
 	Data struct {
 		Keys []string `json:"keys"`
@@ -27,7 +29,7 @@ type vaultKVV2WriteOptions struct {
 
 type vaultKVV2WriteRequest struct {
 	Options *vaultKVV2WriteOptions `json:"options,omitempty"`
-	Data    map[string]any         `json:"data"`
+	Data    json.RawMessage        `json:"data"`
 }
 
 type vaultIdentityEntityResponse struct {

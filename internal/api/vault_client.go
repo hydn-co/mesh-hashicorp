@@ -125,9 +125,9 @@ func (c *VaultClient) SetKVV1Secret(
 	ctx context.Context,
 	mountPath string,
 	secretPath string,
-	data map[string]any,
+	data json.RawMessage,
 ) error {
-	if data == nil {
+	if len(bytes.TrimSpace(data)) == 0 {
 		return fmt.Errorf("vault secret data is required")
 	}
 
@@ -156,10 +156,10 @@ func (c *VaultClient) SetKVV2Secret(
 	ctx context.Context,
 	mountPath string,
 	secretPath string,
-	data map[string]any,
+	data json.RawMessage,
 	cas *int,
 ) error {
-	if data == nil {
+	if len(bytes.TrimSpace(data)) == 0 {
 		return fmt.Errorf("vault secret data is required")
 	}
 

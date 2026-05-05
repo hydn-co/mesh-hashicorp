@@ -1,6 +1,7 @@
 package payloads
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/hydn-co/mesh-sdk/pkg/testkit"
@@ -34,10 +35,21 @@ func TestShouldRejectTerraformTeamMembershipAssignPayloadWhenFieldsMissing(t *te
 }
 
 func TestShouldRejectVaultKVV1SecretSetPayloadWhenMountPathMissing(t *testing.T) {
-	err := (&VaultKVV1SecretSetPayload{SecretPath: "app/config", Data: map[string]any{"foo": "bar"}}).Validate()
+	err := (&VaultKVV1SecretSetPayload{SecretPath: "app/config", Data: json.RawMessage(`{"foo":"bar"}`)}).Validate()
 
 	require.Error(t, err)
 	assert.EqualError(t, err, "mount_path is required")
+}
+
+func TestShouldRejectVaultKVV1SecretSetPayloadWhenDataIsJSONString(t *testing.T) {
+	err := (&VaultKVV1SecretSetPayload{
+		MountPath:  "secret",
+		SecretPath: "app/config",
+		Data:       json.RawMessage(`"{\"foo\":\"bar\"}"`),
+	}).Validate()
+
+	require.Error(t, err)
+	assert.EqualError(t, err, "data must be a JSON object")
 }
 
 func TestShouldRejectVaultKVV2SecretSetPayloadWhenCASNegative(t *testing.T) {
@@ -45,7 +57,7 @@ func TestShouldRejectVaultKVV2SecretSetPayloadWhenCASNegative(t *testing.T) {
 	err := (&VaultKVV2SecretSetPayload{
 		MountPath:  "secret",
 		SecretPath: "app/config",
-		Data:       map[string]any{"foo": "bar"},
+		Data:       json.RawMessage(`{"foo":"bar"}`),
 		CAS:        &cas,
 	}).Validate()
 

@@ -117,7 +117,7 @@ func TestShouldWriteVaultKVV1SecretUsingMountMetadata(t *testing.T) {
 		context.Background(),
 		"secret",
 		"app/config",
-		map[string]any{"foo": "bar"},
+		json.RawMessage(`{"foo":"bar"}`),
 	)
 
 	// Assert
@@ -161,7 +161,7 @@ func TestShouldWriteVaultKVV2SecretUsingMountMetadata(t *testing.T) {
 		context.Background(),
 		"secret/",
 		"/app/config/",
-		map[string]any{"foo": "bar"},
+		json.RawMessage(`{"foo":"bar"}`),
 		&cas,
 	)
 
@@ -189,7 +189,7 @@ func TestShouldRejectWritingVaultKVV1SecretWhenMountIsKVV2(t *testing.T) {
 		context.Background(),
 		"secret",
 		"app/config",
-		map[string]any{"foo": "bar"},
+		json.RawMessage(`{"foo":"bar"}`),
 	)
 
 	// Assert
@@ -217,7 +217,7 @@ func TestShouldRejectWritingVaultKVV2SecretWhenMountIsKVV1(t *testing.T) {
 		context.Background(),
 		"secret",
 		"app/config",
-		map[string]any{"foo": "bar"},
+		json.RawMessage(`{"foo":"bar"}`),
 		nil,
 	)
 

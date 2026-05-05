@@ -78,7 +78,7 @@ func TestShouldRejectVaultKVV1SecretSetStartWhenNotInitialized(t *testing.T) {
 		&payloads.VaultKVV1SecretSetPayload{
 			MountPath:  "secret",
 			SecretPath: "app/config",
-			Data:       map[string]any{"foo": "bar"},
+			Data:       json.RawMessage(`{"foo":"bar"}`),
 		},
 		json.RawMessage(`{"api_key":"token"}`),
 	)
@@ -100,7 +100,7 @@ func TestShouldRejectVaultKVV2SecretSetStopWhenNotInitialized(t *testing.T) {
 		&payloads.VaultKVV2SecretSetPayload{
 			MountPath:  "secret",
 			SecretPath: "app/config",
-			Data:       map[string]any{"foo": "bar"},
+			Data:       json.RawMessage(`{"foo":"bar"}`),
 		},
 		json.RawMessage(`{"api_key":"token"}`),
 	)
@@ -119,7 +119,7 @@ func TestShouldRejectVaultKVV2SecretSetInitWhenPayloadInvalid(t *testing.T) {
 		&options.VaultKVV2SecretSetActionOptions{
 			VaultOptionsCore: options.VaultOptionsCore{Address: "https://vault.example.com"},
 		},
-		&payloads.VaultKVV2SecretSetPayload{SecretPath: "app/config", Data: map[string]any{"foo": "bar"}},
+		&payloads.VaultKVV2SecretSetPayload{SecretPath: "app/config", Data: json.RawMessage(`{"foo":"bar"}`)},
 		nil,
 	)
 

@@ -1,12 +1,15 @@
 package payloads
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type VaultKVV2SecretSetPayload struct {
-	MountPath  string         `json:"mount_path"    binding:"required"`
-	SecretPath string         `json:"secret_path"   binding:"required"`
-	Data       map[string]any `json:"data"          binding:"required"`
-	CAS        *int           `json:"cas,omitempty"`
+	MountPath  string          `json:"mount_path"    binding:"required"`
+	SecretPath string          `json:"secret_path"   binding:"required"`
+	Data       json.RawMessage `json:"data"          binding:"required" additionalProperties:"true"`
+	CAS        *int            `json:"cas,omitempty"`
 }
 
 func (p *VaultKVV2SecretSetPayload) GetDiscriminator() string {
