@@ -18,7 +18,7 @@ func logAction[T connector.FeatureOptions, P connector.FeaturePayload](
 	if action != nil {
 		logArgs = append(logArgs,
 			"tenant_id", action.GetTenantID(),
-			"connector_id", action.GetSegmentID(),
+			"connector_id", action.GetConnectorID(),
 			"feature_name", action.GetName(),
 		)
 	}

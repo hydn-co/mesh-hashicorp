@@ -55,9 +55,6 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 		}
 
 		group := newTerraformGroup(result.Team)
-		if err := group.ApplyMetadata(c.GetTenantID(), c.GetSegmentID()); err != nil {
-			return fmt.Errorf("apply group metadata for %s: %w", group.GroupRef, err)
-		}
 		if err := c.Emit(ctx, group); err != nil {
 			return fmt.Errorf("emit group %s: %w", group.GroupRef, err)
 		}
@@ -73,14 +70,6 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 			}
 
 			groupMember := newTerraformGroupMember(result.Team.ID, member.ID, user)
-			if err := groupMember.ApplyMetadata(c.GetTenantID(), c.GetSegmentID()); err != nil {
-				return fmt.Errorf(
-					"apply group member metadata for %s:%s: %w",
-					groupMember.GroupRef,
-					groupMember.AccountRef,
-					err,
-				)
-			}
 			if err := c.Emit(ctx, groupMember); err != nil {
 				return fmt.Errorf(
 					"emit group member %s:%s: %w",

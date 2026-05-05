@@ -18,7 +18,7 @@ func logCollector[T connector.FeatureOptions, P connector.FeaturePayload](
 	if collector != nil {
 		logArgs = append(logArgs,
 			"tenant_id", collector.GetTenantID(),
-			"connector_id", collector.GetSegmentID(),
+			"connector_id", collector.GetConnectorID(),
 			"feature_name", collector.GetName(),
 		)
 	}

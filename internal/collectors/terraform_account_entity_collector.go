@@ -65,9 +65,6 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 		}
 
 		account := newTerraformAccount(userID, user, result.Membership.Attributes.Status)
-		if err := account.ApplyMetadata(c.GetTenantID(), c.GetSegmentID()); err != nil {
-			return fmt.Errorf("apply account metadata for %s: %w", account.AccountRef, err)
-		}
 		if err := c.Emit(ctx, account); err != nil {
 			return fmt.Errorf("emit account %s: %w", account.AccountRef, err)
 		}
