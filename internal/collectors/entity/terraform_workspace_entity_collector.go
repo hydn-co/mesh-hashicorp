@@ -19,7 +19,8 @@ func NewTerraformWorkspaceEntityCollector(
 }
 
 type TerraformWorkspaceEntityCollector struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.TerraformWorkspaceEntityCollectorOptions, *connector.NoPayload]
 }
 
@@ -32,6 +33,7 @@ func (c *TerraformWorkspaceEntityCollector) Init(_ context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	c.token = token
+	c.initialized = true
 
 	return nil
 }
@@ -39,6 +41,9 @@ func (c *TerraformWorkspaceEntityCollector) Init(_ context.Context) error {
 func (c *TerraformWorkspaceEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform workspace entity collector not initialized")
 	}
 	collectors.LogCollector(
 		ctx,
@@ -49,4 +54,14 @@ func (c *TerraformWorkspaceEntityCollector) Start(ctx context.Context) error {
 	return fmt.Errorf("terraform workspace entity collector not implemented")
 }
 
-func (c *TerraformWorkspaceEntityCollector) Stop(context.Context) error { return nil }
+func (c *TerraformWorkspaceEntityCollector) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform workspace entity collector not initialized")
+	}
+	c.initialized = false
+	c.token = ""
+	return nil
+}

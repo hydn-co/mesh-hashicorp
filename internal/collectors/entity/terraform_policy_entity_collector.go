@@ -19,7 +19,8 @@ func NewTerraformPolicyEntityCollector(
 }
 
 type TerraformPolicyEntityCollector struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.TerraformPolicyEntityCollectorOptions, *connector.NoPayload]
 }
 
@@ -32,6 +33,7 @@ func (c *TerraformPolicyEntityCollector) Init(_ context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	c.token = token
+	c.initialized = true
 
 	return nil
 }
@@ -39,6 +41,9 @@ func (c *TerraformPolicyEntityCollector) Init(_ context.Context) error {
 func (c *TerraformPolicyEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform policy entity collector not initialized")
 	}
 	collectors.LogCollector(
 		ctx,
@@ -49,4 +54,14 @@ func (c *TerraformPolicyEntityCollector) Start(ctx context.Context) error {
 	return fmt.Errorf("terraform policy entity collector not implemented")
 }
 
-func (c *TerraformPolicyEntityCollector) Stop(context.Context) error { return nil }
+func (c *TerraformPolicyEntityCollector) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform policy entity collector not initialized")
+	}
+	c.initialized = false
+	c.token = ""
+	return nil
+}

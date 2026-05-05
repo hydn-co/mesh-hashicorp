@@ -19,7 +19,8 @@ func NewTerraformTeamMembershipAssignAction(
 }
 
 type TerraformTeamMembershipAssignAction struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.TerraformTeamMembershipAssignActionOptions, *payloads.TerraformTeamMembershipAssignPayload]
 }
 
@@ -37,6 +38,7 @@ func (a *TerraformTeamMembershipAssignAction) Init(ctx context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	a.token = token
+	a.initialized = true
 	logAction(ctx, a.TypedFeatureContext, slog.LevelInfo, "Initialized HCP Terraform team membership assign action")
 	return nil
 }
@@ -45,8 +47,21 @@ func (a *TerraformTeamMembershipAssignAction) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	if !a.initialized {
+		return fmt.Errorf("terraform team membership assign action not initialized")
+	}
 	logAction(ctx, a.TypedFeatureContext, slog.LevelInfo, "Starting HCP Terraform team membership assign action")
 	return fmt.Errorf("terraform team membership assign action not implemented")
 }
 
-func (a *TerraformTeamMembershipAssignAction) Stop(context.Context) error { return nil }
+func (a *TerraformTeamMembershipAssignAction) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !a.initialized {
+		return fmt.Errorf("terraform team membership assign action not initialized")
+	}
+	a.initialized = false
+	a.token = ""
+	return nil
+}

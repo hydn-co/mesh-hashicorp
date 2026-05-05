@@ -23,7 +23,8 @@ func NewVaultIdentityEntityCollector(
 }
 
 type VaultIdentityEntityCollector struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.VaultIdentityEntityCollectorOptions, *connector.NoPayload]
 }
 
@@ -37,6 +38,7 @@ func (c *VaultIdentityEntityCollector) Init(_ context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	c.token = token
+	c.initialized = true
 
 	return nil
 }
@@ -44,6 +46,9 @@ func (c *VaultIdentityEntityCollector) Init(_ context.Context) error {
 func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("vault identity entity collector not initialized")
 	}
 	collectors.LogCollector(
 		ctx,
@@ -183,12 +188,19 @@ func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
 }
 
 func (c *VaultIdentityEntityCollector) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("vault identity entity collector not initialized")
+	}
 	collectors.LogCollector(
 		ctx,
 		c.TypedFeatureContext,
 		slog.LevelInfo,
 		"Stopping Vault identity entity collector",
 	)
+	c.initialized = false
 	c.token = ""
 	return nil
 }

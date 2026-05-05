@@ -19,7 +19,8 @@ func NewTerraformAuditTrailActivityCollector(
 }
 
 type TerraformAuditTrailActivityCollector struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.TerraformAuditTrailActivityCollectorOptions, *connector.NoPayload]
 }
 
@@ -32,6 +33,7 @@ func (c *TerraformAuditTrailActivityCollector) Init(_ context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	c.token = token
+	c.initialized = true
 
 	return nil
 }
@@ -39,6 +41,9 @@ func (c *TerraformAuditTrailActivityCollector) Init(_ context.Context) error {
 func (c *TerraformAuditTrailActivityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform audit trail activity collector not initialized")
 	}
 	collectors.LogCollector(
 		ctx,
@@ -49,4 +54,14 @@ func (c *TerraformAuditTrailActivityCollector) Start(ctx context.Context) error 
 	return fmt.Errorf("terraform audit trail activity collector not implemented")
 }
 
-func (c *TerraformAuditTrailActivityCollector) Stop(context.Context) error { return nil }
+func (c *TerraformAuditTrailActivityCollector) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform audit trail activity collector not initialized")
+	}
+	c.initialized = false
+	c.token = ""
+	return nil
+}

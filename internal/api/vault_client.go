@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/hydn-co/mesh-hashicorp/internal/normalization"
 )
 
 const (
@@ -99,7 +101,7 @@ func (c *VaultClient) ListPolicyNames(ctx context.Context) ([]string, error) {
 }
 
 func (c *VaultClient) GetMount(ctx context.Context, mountPath string) (VaultMount, error) {
-	normalizedMountPath, err := normalizeVaultMountPath(mountPath)
+	normalizedMountPath, err := normalization.NormalizeVaultMountPath(mountPath)
 	if err != nil {
 		return VaultMount{}, err
 	}
@@ -133,7 +135,7 @@ func (c *VaultClient) SetKVV1Secret(
 	if err != nil {
 		return err
 	}
-	normalizedSecretPath, err := normalizeVaultSecretPath(secretPath)
+	normalizedSecretPath, err := normalization.NormalizeVaultSecretPath(secretPath)
 	if err != nil {
 		return err
 	}
@@ -165,7 +167,7 @@ func (c *VaultClient) SetKVV2Secret(
 	if err != nil {
 		return err
 	}
-	normalizedSecretPath, err := normalizeVaultSecretPath(secretPath)
+	normalizedSecretPath, err := normalization.NormalizeVaultSecretPath(secretPath)
 	if err != nil {
 		return err
 	}
@@ -322,24 +324,6 @@ func (c *VaultClient) newRequest(
 	return req, nil
 }
 
-func normalizeVaultMountPath(mountPath string) (string, error) {
-	normalizedMountPath := strings.Trim(strings.TrimSpace(mountPath), "/")
-	if normalizedMountPath == "" {
-		return "", fmt.Errorf("vault mount path is required")
-	}
-
-	return normalizedMountPath, nil
-}
-
-func normalizeVaultSecretPath(secretPath string) (string, error) {
-	normalizedSecretPath := strings.Trim(strings.TrimSpace(secretPath), "/")
-	if normalizedSecretPath == "" {
-		return "", fmt.Errorf("vault secret path is required")
-	}
-
-	return normalizedSecretPath, nil
-}
-
 func escapeVaultPath(path string) string {
 	segments := strings.Split(path, "/")
 	for index, segment := range segments {
@@ -350,7 +334,7 @@ func escapeVaultPath(path string) string {
 }
 
 func (c *VaultClient) requireKVVersion(ctx context.Context, mountPath string, expectedVersion string) (string, error) {
-	normalizedMountPath, err := normalizeVaultMountPath(mountPath)
+	normalizedMountPath, err := normalization.NormalizeVaultMountPath(mountPath)
 	if err != nil {
 		return "", err
 	}

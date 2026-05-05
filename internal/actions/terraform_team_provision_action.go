@@ -19,7 +19,8 @@ func NewTerraformTeamProvisionAction(
 }
 
 type TerraformTeamProvisionAction struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.TerraformTeamProvisionActionOptions, *payloads.TerraformTeamProvisionPayload]
 }
 
@@ -37,6 +38,7 @@ func (a *TerraformTeamProvisionAction) Init(ctx context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	a.token = token
+	a.initialized = true
 	logAction(ctx, a.TypedFeatureContext, slog.LevelInfo, "Initialized HCP Terraform team provision action")
 	return nil
 }
@@ -45,8 +47,21 @@ func (a *TerraformTeamProvisionAction) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	if !a.initialized {
+		return fmt.Errorf("terraform team provision action not initialized")
+	}
 	logAction(ctx, a.TypedFeatureContext, slog.LevelInfo, "Starting HCP Terraform team provision action")
 	return fmt.Errorf("terraform team provision action not implemented")
 }
 
-func (a *TerraformTeamProvisionAction) Stop(context.Context) error { return nil }
+func (a *TerraformTeamProvisionAction) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !a.initialized {
+		return fmt.Errorf("terraform team provision action not initialized")
+	}
+	a.initialized = false
+	a.token = ""
+	return nil
+}

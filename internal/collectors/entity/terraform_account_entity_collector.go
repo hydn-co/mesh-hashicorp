@@ -22,7 +22,8 @@ func NewTerraformAccountEntityCollector(
 }
 
 type TerraformAccountEntityCollector struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.TerraformAccountEntityCollectorOptions, *connector.NoPayload]
 }
 
@@ -36,6 +37,7 @@ func (c *TerraformAccountEntityCollector) Init(_ context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	c.token = token
+	c.initialized = true
 
 	return nil
 }
@@ -43,6 +45,9 @@ func (c *TerraformAccountEntityCollector) Init(_ context.Context) error {
 func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform account entity collector not initialized")
 	}
 	collectors.LogCollector(
 		ctx,
@@ -103,4 +108,14 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 	return nil
 }
 
-func (c *TerraformAccountEntityCollector) Stop(context.Context) error { return nil }
+func (c *TerraformAccountEntityCollector) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("terraform account entity collector not initialized")
+	}
+	c.initialized = false
+	c.token = ""
+	return nil
+}

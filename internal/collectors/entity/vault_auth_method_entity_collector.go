@@ -23,7 +23,8 @@ func NewVaultAuthMethodEntityCollector(
 }
 
 type VaultAuthMethodEntityCollector struct {
-	token string
+	initialized bool
+	token       string
 	*connector.TypedFeatureContext[*options.VaultAuthMethodEntityCollectorOptions, *connector.NoPayload]
 }
 
@@ -37,6 +38,7 @@ func (c *VaultAuthMethodEntityCollector) Init(_ context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	c.token = token
+	c.initialized = true
 
 	return nil
 }
@@ -44,6 +46,9 @@ func (c *VaultAuthMethodEntityCollector) Init(_ context.Context) error {
 func (c *VaultAuthMethodEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("vault auth method entity collector not initialized")
 	}
 	collectors.LogCollector(
 		ctx,
@@ -111,12 +116,19 @@ func (c *VaultAuthMethodEntityCollector) Start(ctx context.Context) error {
 }
 
 func (c *VaultAuthMethodEntityCollector) Stop(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if !c.initialized {
+		return fmt.Errorf("vault auth method entity collector not initialized")
+	}
 	collectors.LogCollector(
 		ctx,
 		c.TypedFeatureContext,
 		slog.LevelInfo,
 		"Stopping Vault auth method entity collector",
 	)
+	c.initialized = false
 	c.token = ""
 	return nil
 }
