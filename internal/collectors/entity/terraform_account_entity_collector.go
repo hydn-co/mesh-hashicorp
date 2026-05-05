@@ -1,4 +1,4 @@
-package collectors
+package entity
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/fgrzl/enumerators"
 	"github.com/hydn-co/mesh-hashicorp/internal/api"
+	"github.com/hydn-co/mesh-hashicorp/internal/collectors"
 	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
@@ -41,9 +42,14 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	logCollector(ctx, c.TypedFeatureContext, slog.LevelInfo, "Starting HCP Terraform account entity collector")
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Starting HCP Terraform account entity collector",
+	)
 
-	client, err := newTerraformClient(c.GetOptions().GetHostname(), c.token)
+	client, err := collectors.NewTerraformClient(c.GetOptions().GetHostname(), c.token)
 	if err != nil {
 		return fmt.Errorf("build terraform client: %w", err)
 	}
@@ -64,7 +70,7 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 			user = api.TerraformUser{ID: userID}
 		}
 
-		account := newTerraformAccount(userID, user, result.Membership.Attributes.Status)
+		account := collectors.NewTerraformAccount(userID, user, result.Membership.Attributes.Status)
 		if err := c.Emit(ctx, account); err != nil {
 			return fmt.Errorf("emit account %s: %w", account.AccountRef, err)
 		}
@@ -74,7 +80,12 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 		return fmt.Errorf("enumerate organization memberships: %w", err)
 	}
 
-	logCollector(ctx, c.TypedFeatureContext, slog.LevelInfo, "Finished HCP Terraform account entity collector")
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Finished HCP Terraform account entity collector",
+	)
 	return nil
 }
 

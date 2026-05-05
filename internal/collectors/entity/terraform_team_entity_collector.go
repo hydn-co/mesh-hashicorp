@@ -1,4 +1,4 @@
-package collectors
+package entity
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/fgrzl/enumerators"
 	"github.com/hydn-co/mesh-hashicorp/internal/api"
+	"github.com/hydn-co/mesh-hashicorp/internal/collectors"
 	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
@@ -41,9 +42,14 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	logCollector(ctx, c.TypedFeatureContext, slog.LevelInfo, "Starting HCP Terraform team entity collector")
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Starting HCP Terraform team entity collector",
+	)
 
-	client, err := newTerraformClient(c.GetOptions().GetHostname(), c.token)
+	client, err := collectors.NewTerraformClient(c.GetOptions().GetHostname(), c.token)
 	if err != nil {
 		return fmt.Errorf("build terraform client: %w", err)
 	}
@@ -54,7 +60,7 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 			return err
 		}
 
-		group := newTerraformGroup(result.Team)
+		group := collectors.NewTerraformGroup(result.Team)
 		if err := c.Emit(ctx, group); err != nil {
 			return fmt.Errorf("emit group %s: %w", group.GroupRef, err)
 		}
@@ -69,7 +75,7 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 				user = api.TerraformUser{ID: member.ID}
 			}
 
-			groupMember := newTerraformGroupMember(result.Team.ID, member.ID, user)
+			groupMember := collectors.NewTerraformGroupMember(result.Team.ID, member.ID, user)
 			if err := c.Emit(ctx, groupMember); err != nil {
 				return fmt.Errorf(
 					"emit group member %s:%s: %w",
@@ -85,7 +91,12 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 		return fmt.Errorf("enumerate teams: %w", err)
 	}
 
-	logCollector(ctx, c.TypedFeatureContext, slog.LevelInfo, "Finished HCP Terraform team entity collector")
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Finished HCP Terraform team entity collector",
+	)
 	return nil
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/hydn-co/mesh-sdk/pkg/catalog/types"
 )
 
-func newTerraformAccount(accountRef string, user api.TerraformUser, status string) *entities.Account {
+func NewTerraformAccount(accountRef string, user api.TerraformUser, status string) *entities.Account {
 	displayName := user.DisplayName()
 	description := "HCP Terraform organization membership"
 	if authMethod := strings.TrimSpace(user.Attributes.AuthMethod); authMethod != "" {
@@ -34,7 +34,7 @@ func newTerraformAccount(accountRef string, user api.TerraformUser, status strin
 	return account
 }
 
-func newTerraformGroup(team api.TerraformTeam) *entities.Group {
+func NewTerraformGroup(team api.TerraformTeam) *entities.Group {
 	group := entities.NewGroup()
 	group.GroupRef = team.ID
 	group.Name = strings.TrimSpace(team.Attributes.Name)
@@ -47,7 +47,7 @@ func newTerraformGroup(team api.TerraformTeam) *entities.Group {
 	return group
 }
 
-func newTerraformGroupMember(groupRef, accountRef string, user api.TerraformUser) *entities.GroupMember {
+func NewTerraformGroupMember(groupRef, accountRef string, user api.TerraformUser) *entities.GroupMember {
 	groupMember := entities.NewGroupMember()
 	groupMember.GroupRef = groupRef
 	groupMember.AccountRef = accountRef

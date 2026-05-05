@@ -1,10 +1,11 @@
-package collectors
+package activity
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
 
+	"github.com/hydn-co/mesh-hashicorp/internal/collectors"
 	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
@@ -39,7 +40,12 @@ func (c *TerraformAuditTrailActivityCollector) Start(ctx context.Context) error 
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	logCollector(ctx, c.TypedFeatureContext, slog.LevelInfo, "Starting HCP Terraform audit trail activity collector")
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Starting HCP Terraform audit trail activity collector",
+	)
 	return fmt.Errorf("terraform audit trail activity collector not implemented")
 }
 

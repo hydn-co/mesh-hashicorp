@@ -4,7 +4,8 @@ import (
 	"log"
 
 	"github.com/hydn-co/mesh-hashicorp/internal/actions"
-	"github.com/hydn-co/mesh-hashicorp/internal/collectors"
+	activitycollectors "github.com/hydn-co/mesh-hashicorp/internal/collectors/activity"
+	entitycollectors "github.com/hydn-co/mesh-hashicorp/internal/collectors/entity"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-hashicorp/internal/payloads"
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
@@ -32,7 +33,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewTerraformAccountEntityCollector),
+		runner.Factory(entitycollectors.NewTerraformAccountEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +48,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewTerraformTeamEntityCollector),
+		runner.Factory(entitycollectors.NewTerraformTeamEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +63,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewTerraformWorkspaceEntityCollector),
+		runner.Factory(entitycollectors.NewTerraformWorkspaceEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -77,7 +78,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewTerraformPolicyEntityCollector),
+		runner.Factory(entitycollectors.NewTerraformPolicyEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +93,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewTerraformTeamAccessEntityCollector),
+		runner.Factory(entitycollectors.NewTerraformTeamAccessEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +108,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorLastActivity,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewTerraformAuditTrailActivityCollector),
+		runner.Factory(activitycollectors.NewTerraformAuditTrailActivityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -122,7 +123,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewVaultIdentityEntityCollector),
+		runner.Factory(entitycollectors.NewVaultIdentityEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -137,7 +138,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewVaultPolicyEntityCollector),
+		runner.Factory(entitycollectors.NewVaultPolicyEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -152,7 +153,7 @@ func WithManifest() *runner.Manifest {
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(collectors.NewVaultAuthMethodEntityCollector),
+		runner.Factory(entitycollectors.NewVaultAuthMethodEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}

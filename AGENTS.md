@@ -19,13 +19,14 @@ This file orients AI agents and automated tooling working in the `mesh-hashicorp
 ## Non-negotiable rules
 
 1. All collectors and actions embed `*connector.TypedFeatureContext[...]` and implement `Init`, `Start`, and `Stop`.
-2. All option types live in `internal/options/` with one type per file plus shared `core.go`, `register.go`, and validation helpers.
-3. All payload types live in `internal/payloads/` with one type per file plus `register.go`.
-4. Use only `net/http` for provider API calls.
-5. Wrap errors with `fmt.Errorf("context: %w", err)`.
-6. Validate options in `Init()` and validate action payloads in action `Init()`.
-7. Use `testkit.TestPolymorphicRegistrations()` for option and payload registration coverage.
-8. Use behavioral test names: `TestShould{Expectation}When{Condition}`.
+2. Collectors are split by feature type under `internal/collectors/entity/` and `internal/collectors/activity/`. Shared collector helpers stay in `internal/collectors/` only when used by both.
+3. All option types live in `internal/options/` with one type per file plus shared `core.go`, `register.go`, and validation helpers.
+4. All payload types live in `internal/payloads/` with one type per file plus `register.go`.
+5. Use only `net/http` for provider API calls.
+6. Wrap errors with `fmt.Errorf("context: %w", err)`.
+7. Validate options in `Init()` and validate action payloads in action `Init()`.
+8. Use `testkit.TestPolymorphicRegistrations()` for option and payload registration coverage.
+9. Use behavioral test names: `TestShould{Expectation}When{Condition}`.
 
 ## Primary sources
 
@@ -34,7 +35,7 @@ This file orients AI agents and automated tooling working in the `mesh-hashicorp
 | Manifest and feature registration | `cmd/main.go` |
 | Options | `internal/options/` |
 | Payloads | `internal/payloads/` |
-| Collectors | `internal/collectors/` |
+| Collectors | `internal/collectors/entity/`, `internal/collectors/activity/`, and shared helpers in `internal/collectors/` |
 | Actions | `internal/actions/` |
 | Credentials | `internal/credentials/` |
 | SDK framework | `mesh-sdk/pkg/runner`, `mesh-sdk/pkg/connector`, `mesh-sdk/pkg/testkit` |

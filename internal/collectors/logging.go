@@ -7,7 +7,7 @@ import (
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
 )
 
-func logCollector[T connector.FeatureOptions, P connector.FeaturePayload](
+func LogCollector[T connector.FeatureOptions, P connector.FeaturePayload](
 	ctx context.Context,
 	collector *connector.TypedFeatureContext[T, P],
 	level slog.Level,
