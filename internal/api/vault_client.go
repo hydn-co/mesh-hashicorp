@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,9 @@ const (
 	vaultTokenHeader     = "X-Vault-Token"
 	vaultNamespaceHeader = "X-Vault-Namespace"
 	vaultRequestHeader   = "X-Vault-Request"
+	vaultKVType          = "kv"
+	vaultKVVersion1      = "1"
+	vaultKVVersion2      = "2"
 )
 
 type VaultClient struct {
@@ -94,11 +98,99 @@ func (c *VaultClient) ListPolicyNames(ctx context.Context) ([]string, error) {
 	return response.Policies, nil
 }
 
+func (c *VaultClient) GetMount(ctx context.Context, mountPath string) (VaultMount, error) {
+	normalizedMountPath, err := normalizeVaultMountPath(mountPath)
+	if err != nil {
+		return VaultMount{}, err
+	}
+
+	response := vaultMountResponse{}
+	if err := c.get(ctx, "/v1/sys/mounts/"+escapeVaultPath(normalizedMountPath), nil, &response); err != nil {
+		return VaultMount{}, err
+	}
+
+	if response.Data.Type != "" || response.Data.Options != nil {
+		return response.Data, nil
+	}
+
+	return VaultMount{
+		Type:    response.Type,
+		Options: response.Options,
+	}, nil
+}
+
+func (c *VaultClient) SetKVV1Secret(
+	ctx context.Context,
+	mountPath string,
+	secretPath string,
+	data map[string]any,
+) error {
+	if data == nil {
+		return fmt.Errorf("vault secret data is required")
+	}
+
+	normalizedMountPath, err := c.requireKVVersion(ctx, mountPath, vaultKVVersion1)
+	if err != nil {
+		return err
+	}
+	normalizedSecretPath, err := normalizeVaultSecretPath(secretPath)
+	if err != nil {
+		return err
+	}
+
+	if err := c.postJSON(
+		ctx,
+		"/v1/"+escapeVaultPath(normalizedMountPath)+"/"+escapeVaultPath(normalizedSecretPath),
+		data,
+		nil,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *VaultClient) SetKVV2Secret(
+	ctx context.Context,
+	mountPath string,
+	secretPath string,
+	data map[string]any,
+	cas *int,
+) error {
+	if data == nil {
+		return fmt.Errorf("vault secret data is required")
+	}
+
+	normalizedMountPath, err := c.requireKVVersion(ctx, mountPath, vaultKVVersion2)
+	if err != nil {
+		return err
+	}
+	normalizedSecretPath, err := normalizeVaultSecretPath(secretPath)
+	if err != nil {
+		return err
+	}
+
+	request := vaultKVV2WriteRequest{Data: data}
+	if cas != nil {
+		request.Options = &vaultKVV2WriteOptions{CAS: *cas}
+	}
+	if err := c.postJSON(
+		ctx,
+		"/v1/"+escapeVaultPath(normalizedMountPath)+"/data/"+escapeVaultPath(normalizedSecretPath),
+		request,
+		nil,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *VaultClient) listKeys(ctx context.Context, path string) ([]string, error) {
 	query := url.Values{}
 	query.Set("list", "true")
 
-	body, statusCode, status, err := c.doGet(ctx, path, query)
+	body, statusCode, status, err := c.doRequest(ctx, http.MethodGet, path, query, nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +213,7 @@ func (c *VaultClient) listKeys(ctx context.Context, path string) ([]string, erro
 }
 
 func (c *VaultClient) get(ctx context.Context, path string, query url.Values, out any) error {
-	body, statusCode, status, err := c.doGet(ctx, path, query)
+	body, statusCode, status, err := c.doRequest(ctx, http.MethodGet, path, query, nil, "")
 	if err != nil {
 		return err
 	}
@@ -138,8 +230,45 @@ func (c *VaultClient) get(ctx context.Context, path string, query url.Values, ou
 	return nil
 }
 
-func (c *VaultClient) doGet(ctx context.Context, path string, query url.Values) ([]byte, int, string, error) {
-	req, err := c.newGetRequest(ctx, path, query)
+func (c *VaultClient) postJSON(ctx context.Context, path string, payload any, out any) error {
+	encodedPayload, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("encode vault request: %w", err)
+	}
+
+	body, statusCode, status, err := c.doRequest(
+		ctx,
+		http.MethodPost,
+		path,
+		nil,
+		bytes.NewReader(encodedPayload),
+		"application/json",
+	)
+	if err != nil {
+		return err
+	}
+	if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("vault request failed with status %s%s", status, formatVaultErrorBody(body))
+	}
+	if out == nil || statusCode == http.StatusNoContent || len(body) == 0 {
+		return nil
+	}
+	if err := json.Unmarshal(body, out); err != nil {
+		return fmt.Errorf("decode vault response: %w", err)
+	}
+
+	return nil
+}
+
+func (c *VaultClient) doRequest(
+	ctx context.Context,
+	method string,
+	path string,
+	query url.Values,
+	requestBody io.Reader,
+	contentType string,
+) ([]byte, int, string, error) {
+	req, err := c.newRequest(ctx, method, path, query, requestBody, contentType)
 	if err != nil {
 		return nil, 0, "", err
 	}
@@ -152,15 +281,22 @@ func (c *VaultClient) doGet(ctx context.Context, path string, query url.Values) 
 		_ = resp.Body.Close()
 	}()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
+	responseBody, err := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodyBytes))
 	if err != nil {
 		return nil, 0, "", fmt.Errorf("read vault response: %w", err)
 	}
 
-	return body, resp.StatusCode, resp.Status, nil
+	return responseBody, resp.StatusCode, resp.Status, nil
 }
 
-func (c *VaultClient) newGetRequest(ctx context.Context, path string, query url.Values) (*http.Request, error) {
+func (c *VaultClient) newRequest(
+	ctx context.Context,
+	method string,
+	path string,
+	query url.Values,
+	body io.Reader,
+	contentType string,
+) (*http.Request, error) {
 	requestURL, err := url.Parse(c.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("parse vault base url: %w", err)
@@ -170,17 +306,88 @@ func (c *VaultClient) newGetRequest(ctx context.Context, path string, query url.
 		requestURL.RawQuery = query.Encode()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), body)
 	if err != nil {
 		return nil, fmt.Errorf("create vault request: %w", err)
 	}
 	req.Header.Set(vaultTokenHeader, c.Token)
 	req.Header.Set(vaultRequestHeader, "true")
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
 	if c.Namespace != "" {
 		req.Header.Set(vaultNamespaceHeader, c.Namespace)
 	}
 
 	return req, nil
+}
+
+func normalizeVaultMountPath(mountPath string) (string, error) {
+	normalizedMountPath := strings.Trim(strings.TrimSpace(mountPath), "/")
+	if normalizedMountPath == "" {
+		return "", fmt.Errorf("vault mount path is required")
+	}
+
+	return normalizedMountPath, nil
+}
+
+func normalizeVaultSecretPath(secretPath string) (string, error) {
+	normalizedSecretPath := strings.Trim(strings.TrimSpace(secretPath), "/")
+	if normalizedSecretPath == "" {
+		return "", fmt.Errorf("vault secret path is required")
+	}
+
+	return normalizedSecretPath, nil
+}
+
+func escapeVaultPath(path string) string {
+	segments := strings.Split(path, "/")
+	for index, segment := range segments {
+		segments[index] = url.PathEscape(segment)
+	}
+
+	return strings.Join(segments, "/")
+}
+
+func (c *VaultClient) requireKVVersion(ctx context.Context, mountPath string, expectedVersion string) (string, error) {
+	normalizedMountPath, err := normalizeVaultMountPath(mountPath)
+	if err != nil {
+		return "", err
+	}
+
+	mount, err := c.GetMount(ctx, normalizedMountPath)
+	if err != nil {
+		return "", fmt.Errorf("get vault mount %s: %w", normalizedMountPath, err)
+	}
+	if mount.Type != vaultKVType {
+		return "", fmt.Errorf("vault mount %s is not a kv secrets engine", normalizedMountPath)
+	}
+
+	kvVersion, err := resolveVaultKVVersion(mount)
+	if err != nil {
+		return "", fmt.Errorf("resolve kv version for mount %s: %w", normalizedMountPath, err)
+	}
+	if kvVersion != expectedVersion {
+		return "", fmt.Errorf("vault mount %s is kv v%s, not kv v%s", normalizedMountPath, kvVersion, expectedVersion)
+	}
+
+	return normalizedMountPath, nil
+}
+
+func resolveVaultKVVersion(mount VaultMount) (string, error) {
+	if mount.Type != vaultKVType {
+		return "", fmt.Errorf("mount type %q is not supported", mount.Type)
+	}
+
+	version := strings.TrimSpace(mount.Options["version"])
+	switch version {
+	case "", vaultKVVersion1:
+		return vaultKVVersion1, nil
+	case vaultKVVersion2:
+		return vaultKVVersion2, nil
+	default:
+		return "", fmt.Errorf("unsupported vault kv version %q", version)
+	}
 }
 
 func joinAPIPath(basePath string, apiPath string) string {

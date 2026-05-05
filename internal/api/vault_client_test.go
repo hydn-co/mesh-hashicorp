@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -82,4 +83,145 @@ func TestShouldTreatEmptyVaultListAsNoResults(t *testing.T) {
 	// Assert
 	require.NoError(t, err)
 	assert.Nil(t, keys)
+}
+
+func TestShouldWriteVaultKVV1SecretUsingMountMetadata(t *testing.T) {
+	t.Parallel()
+
+	// Arrange
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/sys/mounts/secret":
+			require.Equal(t, "write-token", r.Header.Get(vaultTokenHeader))
+			require.Equal(t, "admin", r.Header.Get(vaultNamespaceHeader))
+			require.Equal(t, "true", r.Header.Get(vaultRequestHeader))
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"type":"kv","options":null}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/v1/secret/app/config":
+			require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+			var body map[string]any
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+			assert.Equal(t, map[string]any{"foo": "bar"}, body)
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client, err := NewVaultClient(server.Client(), server.URL, "admin", "write-token")
+	require.NoError(t, err)
+
+	// Act
+	err = client.SetKVV1Secret(
+		context.Background(),
+		"secret",
+		"app/config",
+		map[string]any{"foo": "bar"},
+	)
+
+	// Assert
+	require.NoError(t, err)
+}
+
+func TestShouldWriteVaultKVV2SecretUsingMountMetadata(t *testing.T) {
+	t.Parallel()
+
+	// Arrange
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/sys/mounts/secret":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"type":"kv","options":{"version":"2"}}}`))
+		case r.Method == http.MethodPost && r.URL.Path == "/v1/secret/data/app/config":
+			require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+			var body struct {
+				Options struct {
+					CAS int `json:"cas"`
+				} `json:"options"`
+				Data map[string]any `json:"data"`
+			}
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
+			assert.Equal(t, 3, body.Options.CAS)
+			assert.Equal(t, map[string]any{"foo": "bar"}, body.Data)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"version":4}}`))
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	client, err := NewVaultClient(server.Client(), server.URL, "", "write-token")
+	require.NoError(t, err)
+	cas := 3
+
+	// Act
+	err = client.SetKVV2Secret(
+		context.Background(),
+		"secret/",
+		"/app/config/",
+		map[string]any{"foo": "bar"},
+		&cas,
+	)
+
+	// Assert
+	require.NoError(t, err)
+}
+
+func TestShouldRejectWritingVaultKVV1SecretWhenMountIsKVV2(t *testing.T) {
+	t.Parallel()
+
+	// Arrange
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, "/v1/sys/mounts/secret", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"type":"kv","options":{"version":"2"}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewVaultClient(server.Client(), server.URL, "", "write-token")
+	require.NoError(t, err)
+
+	// Act
+	err = client.SetKVV1Secret(
+		context.Background(),
+		"secret",
+		"app/config",
+		map[string]any{"foo": "bar"},
+	)
+
+	// Assert
+	require.Error(t, err)
+	assert.EqualError(t, err, "vault mount secret is kv v2, not kv v1")
+}
+
+func TestShouldRejectWritingVaultKVV2SecretWhenMountIsKVV1(t *testing.T) {
+	t.Parallel()
+
+	// Arrange
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, "/v1/sys/mounts/secret", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"type":"kv"}`))
+	}))
+	defer server.Close()
+
+	client, err := NewVaultClient(server.Client(), server.URL, "", "write-token")
+	require.NoError(t, err)
+
+	// Act
+	err = client.SetKVV2Secret(
+		context.Background(),
+		"secret",
+		"app/config",
+		map[string]any{"foo": "bar"},
+		nil,
+	)
+
+	// Assert
+	require.Error(t, err)
+	assert.EqualError(t, err, "vault mount secret is kv v1, not kv v2")
 }

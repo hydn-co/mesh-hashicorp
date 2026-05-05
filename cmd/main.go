@@ -23,6 +23,7 @@ func WithManifest() *runner.Manifest {
 		"Mesh integration with HashiCorp",
 	)
 
+	// Register collectors
 	if err := manifest.RegisterFeature(
 		"hashicorp_terraform_account_entity_collector",
 		"Collect HCP Terraform Accounts",
@@ -158,6 +159,7 @@ func WithManifest() *runner.Manifest {
 		log.Fatal(err)
 	}
 
+	// Register actions
 	if err := manifest.RegisterFeature(
 		"hashicorp_terraform_team_provision_action",
 		"Provision HCP Terraform Team",
@@ -214,6 +216,36 @@ func WithManifest() *runner.Manifest {
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(actions.NewTerraformTeamAccessAssignAction),
+	); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := manifest.RegisterFeature(
+		"hashicorp_vault_kv_v1_secret_set_action",
+		"Set Vault KV v1 Secret",
+		"Create or update a Vault KV v1 secret.",
+		false,
+		runner.FeatureTypeAction,
+		new(options.VaultKVV1SecretSetActionOptions),
+		new(payloads.VaultKVV1SecretSetPayload),
+		runner.FeatureResumeBehaviorNone,
+		runner.APIKeyCredential,
+		runner.Factory(actions.NewVaultKVV1SecretSetAction),
+	); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := manifest.RegisterFeature(
+		"hashicorp_vault_kv_v2_secret_set_action",
+		"Set Vault KV v2 Secret",
+		"Create or update a Vault KV v2 secret.",
+		false,
+		runner.FeatureTypeAction,
+		new(options.VaultKVV2SecretSetActionOptions),
+		new(payloads.VaultKVV2SecretSetPayload),
+		runner.FeatureResumeBehaviorNone,
+		runner.APIKeyCredential,
+		runner.Factory(actions.NewVaultKVV2SecretSetAction),
 	); err != nil {
 		log.Fatal(err)
 	}

@@ -105,4 +105,13 @@ func (c *VaultPolicyEntityCollector) Start(ctx context.Context) error {
 	return nil
 }
 
-func (c *VaultPolicyEntityCollector) Stop(context.Context) error { return nil }
+func (c *VaultPolicyEntityCollector) Stop(ctx context.Context) error {
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Stopping Vault policy entity collector",
+	)
+	c.token = ""
+	return nil
+}

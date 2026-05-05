@@ -10,6 +10,26 @@ type vaultErrorResponse struct {
 	Errors []string `json:"errors"`
 }
 
+type vaultMountResponse struct {
+	Data    VaultMount        `json:"data"`
+	Type    string            `json:"type"`
+	Options map[string]string `json:"options"`
+}
+
+type VaultMount struct {
+	Type    string            `json:"type"`
+	Options map[string]string `json:"options"`
+}
+
+type vaultKVV2WriteOptions struct {
+	CAS int `json:"cas"`
+}
+
+type vaultKVV2WriteRequest struct {
+	Options *vaultKVV2WriteOptions `json:"options,omitempty"`
+	Data    map[string]any         `json:"data"`
+}
+
 type vaultIdentityEntityResponse struct {
 	Data VaultIdentityEntity `json:"data"`
 }

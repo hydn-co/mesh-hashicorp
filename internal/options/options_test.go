@@ -23,6 +23,8 @@ func TestShouldRegisterPolymorphicOptions(t *testing.T) {
 		"mesh://hashicorp/actions/terraform_workspace_provision_action_options":        &TerraformWorkspaceProvisionActionOptions{},
 		"mesh://hashicorp/actions/terraform_team_membership_assign_action_options":     &TerraformTeamMembershipAssignActionOptions{},
 		"mesh://hashicorp/actions/terraform_team_access_assign_action_options":         &TerraformTeamAccessAssignActionOptions{},
+		"mesh://hashicorp/actions/vault_kv_v1_secret_set_action_options":               &VaultKVV1SecretSetActionOptions{},
+		"mesh://hashicorp/actions/vault_kv_v2_secret_set_action_options":               &VaultKVV2SecretSetActionOptions{},
 	})
 }
 

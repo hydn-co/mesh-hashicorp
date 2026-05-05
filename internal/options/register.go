@@ -16,4 +16,6 @@ func init() {
 	polymorphic.RegisterType[TerraformWorkspaceProvisionActionOptions]()
 	polymorphic.RegisterType[TerraformTeamMembershipAssignActionOptions]()
 	polymorphic.RegisterType[TerraformTeamAccessAssignActionOptions]()
+	polymorphic.RegisterType[VaultKVV1SecretSetActionOptions]()
+	polymorphic.RegisterType[VaultKVV2SecretSetActionOptions]()
 }

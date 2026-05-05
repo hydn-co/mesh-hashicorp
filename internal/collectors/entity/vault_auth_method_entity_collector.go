@@ -110,4 +110,13 @@ func (c *VaultAuthMethodEntityCollector) Start(ctx context.Context) error {
 	return nil
 }
 
-func (c *VaultAuthMethodEntityCollector) Stop(context.Context) error { return nil }
+func (c *VaultAuthMethodEntityCollector) Stop(ctx context.Context) error {
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Stopping Vault auth method entity collector",
+	)
+	c.token = ""
+	return nil
+}

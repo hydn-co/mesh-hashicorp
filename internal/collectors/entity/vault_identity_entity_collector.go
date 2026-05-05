@@ -182,4 +182,13 @@ func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
 	return nil
 }
 
-func (c *VaultIdentityEntityCollector) Stop(context.Context) error { return nil }
+func (c *VaultIdentityEntityCollector) Stop(ctx context.Context) error {
+	collectors.LogCollector(
+		ctx,
+		c.TypedFeatureContext,
+		slog.LevelInfo,
+		"Stopping Vault identity entity collector",
+	)
+	c.token = ""
+	return nil
+}

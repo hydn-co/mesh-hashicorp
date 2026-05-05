@@ -14,6 +14,8 @@ func TestShouldRegisterPolymorphicPayloads(t *testing.T) {
 		"mesh://hashicorp/actions/terraform_workspace_provision_payload":    &TerraformWorkspaceProvisionPayload{},
 		"mesh://hashicorp/actions/terraform_team_membership_assign_payload": &TerraformTeamMembershipAssignPayload{},
 		"mesh://hashicorp/actions/terraform_team_access_assign_payload":     &TerraformTeamAccessAssignPayload{},
+		"mesh://hashicorp/actions/vault_kv_v1_secret_set_payload":           &VaultKVV1SecretSetPayload{},
+		"mesh://hashicorp/actions/vault_kv_v2_secret_set_payload":           &VaultKVV2SecretSetPayload{},
 	})
 }
 
@@ -29,4 +31,24 @@ func TestShouldRejectTerraformTeamMembershipAssignPayloadWhenFieldsMissing(t *te
 
 	require.Error(t, err)
 	assert.EqualError(t, err, "team_id is required")
+}
+
+func TestShouldRejectVaultKVV1SecretSetPayloadWhenMountPathMissing(t *testing.T) {
+	err := (&VaultKVV1SecretSetPayload{SecretPath: "app/config", Data: map[string]any{"foo": "bar"}}).Validate()
+
+	require.Error(t, err)
+	assert.EqualError(t, err, "mount_path is required")
+}
+
+func TestShouldRejectVaultKVV2SecretSetPayloadWhenCASNegative(t *testing.T) {
+	cas := -1
+	err := (&VaultKVV2SecretSetPayload{
+		MountPath:  "secret",
+		SecretPath: "app/config",
+		Data:       map[string]any{"foo": "bar"},
+		CAS:        &cas,
+	}).Validate()
+
+	require.Error(t, err)
+	assert.EqualError(t, err, "cas cannot be negative")
 }

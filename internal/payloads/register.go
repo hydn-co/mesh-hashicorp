@@ -7,4 +7,6 @@ func init() {
 	polymorphic.RegisterType[TerraformWorkspaceProvisionPayload]()
 	polymorphic.RegisterType[TerraformTeamMembershipAssignPayload]()
 	polymorphic.RegisterType[TerraformTeamAccessAssignPayload]()
+	polymorphic.RegisterType[VaultKVV1SecretSetPayload]()
+	polymorphic.RegisterType[VaultKVV2SecretSetPayload]()
 }
