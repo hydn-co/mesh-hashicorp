@@ -24,13 +24,13 @@ type TerraformTeamAccessAssignAction struct {
 }
 
 func (a *TerraformTeamAccessAssignAction) Init(ctx context.Context) error {
-	if err := options.ValidateTerraformOptions(a.GetOptions()); err != nil {
+	opts := a.GetOptions()
+	if err := options.ValidateTerraformOptions(opts); err != nil {
 		return err
 	}
-	if payload := a.GetPayload(); payload == nil {
-		return fmt.Errorf("terraform team access assign payload is required")
-	} else if err := payload.Validate(); err != nil {
-		return fmt.Errorf("invalid terraform team access assign payload: %w", err)
+	payload := a.GetPayload()
+	if err := payloads.ValidatePayload(payload, "terraform team access assign payload"); err != nil {
+		return err
 	}
 	token, err := credentials.ExtractToken(a.GetCredentials())
 	if err != nil {

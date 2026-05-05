@@ -6,16 +6,10 @@ type TerraformOptionsCore struct {
 }
 
 func (o *TerraformOptionsCore) GetHostname() string {
-	if o == nil {
-		return ""
-	}
 	return o.Hostname
 }
 
 func (o *TerraformOptionsCore) GetOrganization() string {
-	if o == nil {
-		return ""
-	}
 	return o.Organization
 }
 
@@ -25,15 +19,9 @@ type VaultOptionsCore struct {
 }
 
 func (o *VaultOptionsCore) GetAddress() string {
-	if o == nil {
-		return ""
-	}
 	return o.Address
 }
 
 func (o *VaultOptionsCore) GetNamespace() string {
-	if o == nil {
-		return ""
-	}
 	return o.Namespace
 }

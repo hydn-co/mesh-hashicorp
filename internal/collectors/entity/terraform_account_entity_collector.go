@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	"github.com/fgrzl/enumerators"
 	"github.com/hydn-co/mesh-hashicorp/internal/api"
@@ -26,7 +27,8 @@ type TerraformAccountEntityCollector struct {
 }
 
 func (c *TerraformAccountEntityCollector) Init(_ context.Context) error {
-	if err := options.ValidateTerraformOptions(c.GetOptions()); err != nil {
+	opts := c.GetOptions()
+	if err := options.ValidateTerraformOptions(opts); err != nil {
 		return err
 	}
 	token, err := credentials.ExtractToken(c.GetCredentials())
@@ -48,13 +50,14 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 		slog.LevelInfo,
 		"Starting HCP Terraform account entity collector",
 	)
+	opts := c.GetOptions()
 
-	client, err := collectors.NewTerraformClient(c.GetOptions().GetHostname(), c.token)
+	client, err := api.NewClient(http.DefaultClient, "terraform", opts.GetHostname(), c.token)
 	if err != nil {
 		return fmt.Errorf("build terraform client: %w", err)
 	}
 
-	membershipEnum := client.OrganizationMembershipEnumerator(ctx, c.GetOptions().GetOrganization())
+	membershipEnum := client.OrganizationMembershipEnumerator(ctx, opts.GetOrganization())
 	if err := enumerators.ForEach(membershipEnum, func(result api.TerraformOrganizationMembershipResult) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -62,7 +65,18 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 
 		userID := result.Membership.Relationships.User.Data.ID
 		if userID == "" {
-			return nil
+			collectors.LogCollector(
+				ctx,
+				c.TypedFeatureContext,
+				slog.LevelWarn,
+				"terraform organization membership returned empty user id",
+				"membership_id",
+				result.Membership.ID,
+			)
+			return fmt.Errorf(
+				"terraform organization membership %s returned empty user id",
+				result.Membership.ID,
+			)
 		}
 
 		user := result.User

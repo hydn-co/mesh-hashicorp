@@ -20,48 +20,49 @@ type Client struct {
 	Token      string
 }
 
-func NewClient(httpClient *http.Client, baseURL string, token string) (*Client, error) {
+func NewClient(httpClient *http.Client, providerName string, baseURL string, token string) (*Client, error) {
 	if httpClient == nil {
-		httpClient = http.DefaultClient
+		return nil, fmt.Errorf("http client is required")
 	}
 
-	normalizedBaseURL, err := normalizeBaseURL(baseURL)
+	normalizedBaseURL, err := normalizeBaseURL(providerName, baseURL)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := credentials.GetBearerAuthorizationHeaderValue(token); err != nil {
-		return nil, fmt.Errorf("validate terraform token: %w", err)
+	normalizedToken, err := credentials.NormalizeToken(token)
+	if err != nil {
+		return nil, fmt.Errorf("validate %s token: %w", providerName, err)
 	}
 
 	return &Client{
 		BaseURL:    normalizedBaseURL,
 		HTTPClient: httpClient,
-		Token:      token,
+		Token:      normalizedToken,
 	}, nil
 }
 
-func normalizeBaseURL(baseURL string) (string, error) {
+func normalizeBaseURL(providerName string, baseURL string) (string, error) {
 	baseURL = strings.TrimSpace(baseURL)
 	baseURL = strings.TrimRight(baseURL, "/")
 	if baseURL == "" {
-		return "", fmt.Errorf("terraform base url is required")
+		return "", fmt.Errorf("%s base url is required", providerName)
 	}
 	if strings.Contains(baseURL, "://") {
 		parsed, err := url.Parse(baseURL)
 		if err != nil {
-			return "", fmt.Errorf("parse terraform base url: %w", err)
+			return "", fmt.Errorf("parse %s base url: %w", providerName, err)
 		}
 		if parsed.Scheme == "" || parsed.Host == "" {
-			return "", fmt.Errorf("terraform base url must include a scheme and host")
+			return "", fmt.Errorf("%s base url must include a scheme and host", providerName)
 		}
 		return parsed.String(), nil
 	}
 	parsed, err := url.Parse("https://" + baseURL)
 	if err != nil {
-		return "", fmt.Errorf("parse terraform base url: %w", err)
+		return "", fmt.Errorf("parse %s base url: %w", providerName, err)
 	}
 	if parsed.Host == "" {
-		return "", fmt.Errorf("terraform base url must include a host")
+		return "", fmt.Errorf("%s base url must include a host", providerName)
 	}
 	return parsed.String(), nil
 }

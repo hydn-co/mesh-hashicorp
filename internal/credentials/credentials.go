@@ -10,6 +10,10 @@ type apiKeyCredentials struct {
 	APIKey string `json:"api_key"`
 }
 
+func NormalizeToken(value string) (string, error) {
+	return normalizeRequiredValue("token", value)
+}
+
 func ExtractToken(raw json.RawMessage) (string, error) {
 	if len(raw) == 0 {
 		return "", fmt.Errorf("api key credentials are required")
@@ -20,19 +24,23 @@ func ExtractToken(raw json.RawMessage) (string, error) {
 		return "", fmt.Errorf("decode api key credentials: %w", err)
 	}
 
-	token := strings.TrimSpace(credentials.APIKey)
-	if token == "" {
-		return "", fmt.Errorf("api_key is required")
-	}
-
-	return token, nil
+	return normalizeRequiredValue("api_key", credentials.APIKey)
 }
 
 func GetBearerAuthorizationHeaderValue(value string) (string, error) {
-	token := strings.TrimSpace(value)
-	if token == "" {
-		return "", fmt.Errorf("token is required")
+	token, err := NormalizeToken(value)
+	if err != nil {
+		return "", err
 	}
 
 	return "Bearer " + token, nil
+}
+
+func normalizeRequiredValue(fieldName string, value string) (string, error) {
+	trimmedValue := strings.TrimSpace(value)
+	if trimmedValue == "" {
+		return "", fmt.Errorf("%s is required", fieldName)
+	}
+
+	return trimmedValue, nil
 }

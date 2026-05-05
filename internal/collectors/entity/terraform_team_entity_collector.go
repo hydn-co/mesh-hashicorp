@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	"github.com/fgrzl/enumerators"
 	"github.com/hydn-co/mesh-hashicorp/internal/api"
@@ -26,7 +27,8 @@ type TerraformTeamEntityCollector struct {
 }
 
 func (c *TerraformTeamEntityCollector) Init(_ context.Context) error {
-	if err := options.ValidateTerraformOptions(c.GetOptions()); err != nil {
+	opts := c.GetOptions()
+	if err := options.ValidateTerraformOptions(opts); err != nil {
 		return err
 	}
 	token, err := credentials.ExtractToken(c.GetCredentials())
@@ -48,16 +50,28 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 		slog.LevelInfo,
 		"Starting HCP Terraform team entity collector",
 	)
+	opts := c.GetOptions()
 
-	client, err := collectors.NewTerraformClient(c.GetOptions().GetHostname(), c.token)
+	client, err := api.NewClient(http.DefaultClient, "terraform", opts.GetHostname(), c.token)
 	if err != nil {
 		return fmt.Errorf("build terraform client: %w", err)
 	}
 
-	teamEnum := client.TeamEnumerator(ctx, c.GetOptions().GetOrganization())
+	teamEnum := client.TeamEnumerator(ctx, opts.GetOrganization())
 	if err := enumerators.ForEach(teamEnum, func(result api.TerraformTeamResult) error {
 		if err := ctx.Err(); err != nil {
 			return err
+		}
+		if result.Team.ID == "" {
+			collectors.LogCollector(
+				ctx,
+				c.TypedFeatureContext,
+				slog.LevelWarn,
+				"terraform team result returned empty team id",
+				"team_name",
+				result.Team.Attributes.Name,
+			)
+			return fmt.Errorf("terraform team result returned empty team id")
 		}
 
 		group := collectors.NewTerraformGroup(result.Team)
@@ -65,25 +79,43 @@ func (c *TerraformTeamEntityCollector) Start(ctx context.Context) error {
 			return fmt.Errorf("emit group %s: %w", group.GroupRef, err)
 		}
 
-		for _, member := range result.Team.Relationships.Users.Data {
-			if member.ID == "" {
-				continue
-			}
+		if err := enumerators.ForEach(
+			enumerators.Slice(result.Team.Relationships.Users.Data),
+			func(member api.TerraformResourceIdentifier) error {
+				if member.ID == "" {
+					collectors.LogCollector(
+						ctx,
+						c.TypedFeatureContext,
+						slog.LevelWarn,
+						"terraform team relationship returned empty user id",
+						"team_id",
+						result.Team.ID,
+					)
+					return fmt.Errorf(
+						"terraform team %s relationship returned empty user id",
+						result.Team.ID,
+					)
+				}
 
-			user, ok := result.UsersByID[member.ID]
-			if !ok {
-				user = api.TerraformUser{ID: member.ID}
-			}
+				user, ok := result.UsersByID[member.ID]
+				if !ok {
+					user = api.TerraformUser{ID: member.ID}
+				}
 
-			groupMember := collectors.NewTerraformGroupMember(result.Team.ID, member.ID, user)
-			if err := c.Emit(ctx, groupMember); err != nil {
-				return fmt.Errorf(
-					"emit group member %s:%s: %w",
-					groupMember.GroupRef,
-					groupMember.AccountRef,
-					err,
-				)
-			}
+				groupMember := collectors.NewTerraformGroupMember(result.Team.ID, member.ID, user)
+				if err := c.Emit(ctx, groupMember); err != nil {
+					return fmt.Errorf(
+						"emit group member %s:%s: %w",
+						groupMember.GroupRef,
+						groupMember.AccountRef,
+						err,
+					)
+				}
+
+				return nil
+			},
+		); err != nil {
+			return fmt.Errorf("enumerate team members for %s: %w", group.GroupRef, err)
 		}
 
 		return nil

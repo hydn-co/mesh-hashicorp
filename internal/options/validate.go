@@ -3,13 +3,15 @@ package options
 import (
 	"fmt"
 	"strings"
+
+	"github.com/hydn-co/mesh-hashicorp/internal/validation"
 )
 
 func ValidateTerraformOptions(opts interface {
 	GetHostname() string
 	GetOrganization() string
 }) error {
-	if opts == nil {
+	if validation.IsNil(opts) {
 		return fmt.Errorf("feature options are required but not provided")
 	}
 	if strings.TrimSpace(opts.GetHostname()) == "" {
@@ -22,7 +24,7 @@ func ValidateTerraformOptions(opts interface {
 }
 
 func ValidateVaultOptions(opts interface{ GetAddress() string }) error {
-	if opts == nil {
+	if validation.IsNil(opts) {
 		return fmt.Errorf("feature options are required but not provided")
 	}
 	if strings.TrimSpace(opts.GetAddress()) == "" {
