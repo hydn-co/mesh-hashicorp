@@ -12,6 +12,7 @@ import (
 	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
+	"github.com/hydn-co/mesh-sdk/pkg/connectorutil"
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
 )
 
@@ -22,14 +23,14 @@ func NewTerraformAccountEntityCollector(
 }
 
 type TerraformAccountEntityCollector struct {
-	initialized bool
-	token       string
+	state connectorutil.FeatureState
+	token string
 	*connector.TypedFeatureContext[*options.TerraformAccountEntityCollectorOptions, *connector.NoPayload]
 }
 
 func (c *TerraformAccountEntityCollector) Init(_ context.Context) error {
 	opts := c.GetOptions()
-	if err := options.ValidateTerraformOptions(opts); err != nil {
+	if err := connectorutil.Validate(opts, "feature options"); err != nil {
 		return err
 	}
 	token, err := credentials.ExtractToken(c.GetCredentials())
@@ -37,7 +38,7 @@ func (c *TerraformAccountEntityCollector) Init(_ context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	c.token = token
-	c.initialized = true
+	c.state.MarkReady()
 
 	return nil
 }
@@ -46,10 +47,10 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !c.initialized {
-		return fmt.Errorf("terraform account entity collector not initialized")
+	if err := c.state.RequireReady(); err != nil {
+		return err
 	}
-	collectors.LogCollector(
+	connectorutil.LogFeature(
 		ctx,
 		c.TypedFeatureContext,
 		slog.LevelInfo,
@@ -70,7 +71,7 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 
 		userID := result.Membership.Relationships.User.Data.ID
 		if userID == "" {
-			collectors.LogCollector(
+			connectorutil.LogFeature(
 				ctx,
 				c.TypedFeatureContext,
 				slog.LevelWarn,
@@ -99,7 +100,7 @@ func (c *TerraformAccountEntityCollector) Start(ctx context.Context) error {
 		return fmt.Errorf("enumerate organization memberships: %w", err)
 	}
 
-	collectors.LogCollector(
+	connectorutil.LogFeature(
 		ctx,
 		c.TypedFeatureContext,
 		slog.LevelInfo,
@@ -112,10 +113,10 @@ func (c *TerraformAccountEntityCollector) Stop(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !c.initialized {
-		return fmt.Errorf("terraform account entity collector not initialized")
+	if err := c.state.RequireReady(); err != nil {
+		return err
 	}
-	c.initialized = false
+	c.state.Reset()
 	c.token = ""
 	return nil
 }

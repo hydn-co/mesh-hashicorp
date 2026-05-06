@@ -66,7 +66,7 @@ func TestShouldRejectVaultKVV1SecretSetInitWhenPayloadMissing(t *testing.T) {
 
 	// Assert
 	require.Error(t, err)
-	assert.EqualError(t, err, "vault kv v1 secret set payload is required but not provided")
+	assert.EqualError(t, err, "vault kv v1 secret set payload required but not provided")
 }
 
 func TestShouldRejectVaultKVV1SecretSetStartWhenNotInitialized(t *testing.T) {
@@ -88,7 +88,7 @@ func TestShouldRejectVaultKVV1SecretSetStartWhenNotInitialized(t *testing.T) {
 
 	// Assert
 	require.Error(t, err)
-	assert.EqualError(t, err, "vault kv v1 secret set action not initialized")
+	assert.EqualError(t, err, "feature not ready")
 }
 
 func TestShouldRejectVaultKVV2SecretSetStopWhenNotInitialized(t *testing.T) {
@@ -110,7 +110,7 @@ func TestShouldRejectVaultKVV2SecretSetStopWhenNotInitialized(t *testing.T) {
 
 	// Assert
 	require.Error(t, err)
-	assert.EqualError(t, err, "vault kv v2 secret set action not initialized")
+	assert.EqualError(t, err, "feature not ready")
 }
 
 func TestShouldRejectVaultKVV2SecretSetInitWhenPayloadInvalid(t *testing.T) {

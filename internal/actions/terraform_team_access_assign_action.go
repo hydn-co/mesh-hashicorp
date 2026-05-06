@@ -9,6 +9,7 @@ import (
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-hashicorp/internal/payloads"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
+	"github.com/hydn-co/mesh-sdk/pkg/connectorutil"
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
 )
 
@@ -19,18 +20,18 @@ func NewTerraformTeamAccessAssignAction(
 }
 
 type TerraformTeamAccessAssignAction struct {
-	initialized bool
-	token       string
+	state connectorutil.FeatureState
+	token string
 	*connector.TypedFeatureContext[*options.TerraformTeamAccessAssignActionOptions, *payloads.TerraformTeamAccessAssignPayload]
 }
 
 func (a *TerraformTeamAccessAssignAction) Init(ctx context.Context) error {
 	opts := a.GetOptions()
-	if err := options.ValidateTerraformOptions(opts); err != nil {
+	if err := connectorutil.Validate(opts, "feature options"); err != nil {
 		return err
 	}
 	payload := a.GetPayload()
-	if err := payloads.ValidatePayload(payload, "terraform team access assign payload"); err != nil {
+	if err := connectorutil.Validate(payload, "terraform team access assign payload"); err != nil {
 		return err
 	}
 	token, err := credentials.ExtractToken(a.GetCredentials())
@@ -38,8 +39,13 @@ func (a *TerraformTeamAccessAssignAction) Init(ctx context.Context) error {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
 	a.token = token
-	a.initialized = true
-	logAction(ctx, a.TypedFeatureContext, slog.LevelInfo, "Initialized HCP Terraform team access assign action")
+	a.state.MarkReady()
+	connectorutil.LogFeature(
+		ctx,
+		a.TypedFeatureContext,
+		slog.LevelInfo,
+		"Initialized HCP Terraform team access assign action",
+	)
 	return nil
 }
 
@@ -47,10 +53,15 @@ func (a *TerraformTeamAccessAssignAction) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !a.initialized {
-		return fmt.Errorf("terraform team access assign action not initialized")
+	if err := a.state.RequireReady(); err != nil {
+		return err
 	}
-	logAction(ctx, a.TypedFeatureContext, slog.LevelInfo, "Starting HCP Terraform team access assign action")
+	connectorutil.LogFeature(
+		ctx,
+		a.TypedFeatureContext,
+		slog.LevelInfo,
+		"Starting HCP Terraform team access assign action",
+	)
 	return fmt.Errorf("terraform team access assign action not implemented")
 }
 
@@ -58,10 +69,10 @@ func (a *TerraformTeamAccessAssignAction) Stop(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !a.initialized {
-		return fmt.Errorf("terraform team access assign action not initialized")
+	if err := a.state.RequireReady(); err != nil {
+		return err
 	}
-	a.initialized = false
+	a.state.Reset()
 	a.token = ""
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-hashicorp/internal/payloads"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
+	"github.com/hydn-co/mesh-sdk/pkg/connectorutil"
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
 )
 
@@ -21,20 +22,20 @@ func NewVaultKVV2SecretSetAction(
 }
 
 type VaultKVV2SecretSetAction struct {
-	initialized bool
-	token       string
-	opts        *options.VaultKVV2SecretSetActionOptions
-	payload     *payloads.VaultKVV2SecretSetPayload
+	state   connectorutil.FeatureState
+	token   string
+	opts    *options.VaultKVV2SecretSetActionOptions
+	payload *payloads.VaultKVV2SecretSetPayload
 	*connector.TypedFeatureContext[*options.VaultKVV2SecretSetActionOptions, *payloads.VaultKVV2SecretSetPayload]
 }
 
 func (a *VaultKVV2SecretSetAction) Init(ctx context.Context) error {
 	opts := a.GetOptions()
-	if err := options.ValidateVaultOptions(opts); err != nil {
+	if err := connectorutil.Validate(opts, "feature options"); err != nil {
 		return err
 	}
 	payload := a.GetPayload()
-	if err := payloads.ValidatePayload(payload, "vault kv v2 secret set payload"); err != nil {
+	if err := connectorutil.Validate(payload, "vault kv v2 secret set payload"); err != nil {
 		return err
 	}
 	token, err := credentials.ExtractToken(a.GetCredentials())
@@ -45,9 +46,9 @@ func (a *VaultKVV2SecretSetAction) Init(ctx context.Context) error {
 	a.opts = opts
 	a.payload = payload
 	a.token = token
-	a.initialized = true
+	a.state.MarkReady()
 
-	logAction(
+	connectorutil.LogFeature(
 		ctx,
 		a.TypedFeatureContext,
 		slog.LevelInfo,
@@ -63,11 +64,11 @@ func (a *VaultKVV2SecretSetAction) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !a.initialized {
-		return fmt.Errorf("vault kv v2 secret set action not initialized")
+	if err := a.state.RequireReady(); err != nil {
+		return err
 	}
 
-	logAction(
+	connectorutil.LogFeature(
 		ctx,
 		a.TypedFeatureContext,
 		slog.LevelInfo,
@@ -97,7 +98,7 @@ func (a *VaultKVV2SecretSetAction) Start(ctx context.Context) error {
 		return fmt.Errorf("set vault kv v2 secret: %w", err)
 	}
 
-	logAction(
+	connectorutil.LogFeature(
 		ctx,
 		a.TypedFeatureContext,
 		slog.LevelInfo,
@@ -114,17 +115,17 @@ func (a *VaultKVV2SecretSetAction) Stop(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !a.initialized {
-		return fmt.Errorf("vault kv v2 secret set action not initialized")
+	if err := a.state.RequireReady(); err != nil {
+		return err
 	}
 
-	logAction(
+	connectorutil.LogFeature(
 		ctx,
 		a.TypedFeatureContext,
 		slog.LevelInfo,
 		"Stopping Vault KV v2 secret set action",
 	)
-	a.initialized = false
+	a.state.Reset()
 	a.token = ""
 	a.opts = nil
 	a.payload = nil

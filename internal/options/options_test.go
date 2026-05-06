@@ -3,6 +3,7 @@ package options
 import (
 	"testing"
 
+	"github.com/hydn-co/mesh-sdk/pkg/connectorutil"
 	"github.com/hydn-co/mesh-sdk/pkg/testkit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,15 +31,15 @@ func TestShouldRegisterPolymorphicOptions(t *testing.T) {
 }
 
 func TestShouldRejectTerraformOptionsWhenRequiredFieldsMissing(t *testing.T) {
-	err := ValidateTerraformOptions(&TerraformOptionsCore{})
+	err := connectorutil.Validate(&TerraformTeamProvisionActionOptions{}, "feature options")
 
 	require.Error(t, err)
-	assert.EqualError(t, err, "hostname is required in feature options")
+	assert.EqualError(t, err, "invalid feature options: hostname is required in feature options")
 }
 
 func TestShouldRejectVaultOptionsWhenAddressMissing(t *testing.T) {
-	err := ValidateVaultOptions(&VaultOptionsCore{})
+	err := connectorutil.Validate(&VaultKVV1SecretSetActionOptions{}, "feature options")
 
 	require.Error(t, err)
-	assert.EqualError(t, err, "address is required in feature options")
+	assert.EqualError(t, err, "invalid feature options: address is required in feature options")
 }
