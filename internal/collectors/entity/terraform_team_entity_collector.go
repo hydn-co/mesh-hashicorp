@@ -9,7 +9,6 @@ import (
 	"github.com/fgrzl/enumerators"
 	"github.com/hydn-co/mesh-hashicorp/internal/api"
 	"github.com/hydn-co/mesh-hashicorp/internal/collectors"
-	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
 	"github.com/hydn-co/mesh-sdk/pkg/connectorutil"
@@ -33,7 +32,7 @@ func (c *TerraformTeamEntityCollector) Init(_ context.Context) error {
 	if err := connectorutil.Validate(opts, "feature options"); err != nil {
 		return err
 	}
-	token, err := credentials.ExtractToken(c.GetCredentials())
+	token, err := connectorutil.ExtractAPIKey(c.GetCredentials())
 	if err != nil {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}

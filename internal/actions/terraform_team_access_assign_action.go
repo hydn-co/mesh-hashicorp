@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-hashicorp/internal/payloads"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
@@ -34,7 +33,7 @@ func (a *TerraformTeamAccessAssignAction) Init(ctx context.Context) error {
 	if err := connectorutil.Validate(payload, "terraform team access assign payload"); err != nil {
 		return err
 	}
-	token, err := credentials.ExtractToken(a.GetCredentials())
+	token, err := connectorutil.ExtractAPIKey(a.GetCredentials())
 	if err != nil {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}

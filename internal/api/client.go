@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
+	"github.com/hydn-co/mesh-sdk/pkg/connectorutil"
 )
 
 const maxErrorBodyBytes = 8 * 1024
@@ -29,7 +29,7 @@ func NewClient(httpClient *http.Client, providerName string, baseURL string, tok
 	if err != nil {
 		return nil, err
 	}
-	normalizedToken, err := credentials.NormalizeToken(token)
+	normalizedToken, err := connectorutil.NormalizeToken(token)
 	if err != nil {
 		return nil, fmt.Errorf("validate %s token: %w", providerName, err)
 	}
@@ -80,7 +80,7 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 		return fmt.Errorf("create terraform request: %w", err)
 	}
 	req.Header.Set("Accept", "application/vnd.api+json")
-	authorizationHeaderValue, err := credentials.GetBearerAuthorizationHeaderValue(c.Token)
+	authorizationHeaderValue, err := connectorutil.GetBearerAuthorizationHeaderValue(c.Token)
 	if err != nil {
 		return fmt.Errorf("build authorization header: %w", err)
 	}

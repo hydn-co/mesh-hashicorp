@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
 	"github.com/hydn-co/mesh-sdk/pkg/connectorutil"
@@ -28,7 +27,7 @@ func (c *TerraformTeamAccessEntityCollector) Init(_ context.Context) error {
 	if err := connectorutil.Validate(c.GetOptions(), "feature options"); err != nil {
 		return err
 	}
-	token, err := credentials.ExtractToken(c.GetCredentials())
+	token, err := connectorutil.ExtractAPIKey(c.GetCredentials())
 	if err != nil {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}

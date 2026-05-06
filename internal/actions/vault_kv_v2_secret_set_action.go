@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/hydn-co/mesh-hashicorp/internal/api"
-	"github.com/hydn-co/mesh-hashicorp/internal/credentials"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-hashicorp/internal/payloads"
 	"github.com/hydn-co/mesh-sdk/pkg/connector"
@@ -38,7 +37,7 @@ func (a *VaultKVV2SecretSetAction) Init(ctx context.Context) error {
 	if err := connectorutil.Validate(payload, "vault kv v2 secret set payload"); err != nil {
 		return err
 	}
-	token, err := credentials.ExtractToken(a.GetCredentials())
+	token, err := connectorutil.ExtractAPIKey(a.GetCredentials())
 	if err != nil {
 		return fmt.Errorf("parse api key credentials: %w", err)
 	}
