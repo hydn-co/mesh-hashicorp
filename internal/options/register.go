@@ -12,6 +12,7 @@ func init() {
 	polymorphic.RegisterType[VaultIdentityEntityCollectorOptions]()
 	polymorphic.RegisterType[VaultPolicyEntityCollectorOptions]()
 	polymorphic.RegisterType[VaultAuthMethodEntityCollectorOptions]()
+	polymorphic.RegisterType[VaultSecretEntityCollectorOptions]()
 	polymorphic.RegisterType[TerraformTeamProvisionActionOptions]()
 	polymorphic.RegisterType[TerraformWorkspaceProvisionActionOptions]()
 	polymorphic.RegisterType[TerraformTeamMembershipAssignActionOptions]()

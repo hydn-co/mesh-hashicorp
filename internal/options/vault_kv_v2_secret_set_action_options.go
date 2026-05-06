@@ -11,7 +11,7 @@ func (o *VaultKVV2SecretSetActionOptions) GetDiscriminator() string {
 }
 
 func (o *VaultKVV2SecretSetActionOptions) GetSpaces() []spaces.Space {
-	return []spaces.Space{spaces.SecurityConfigurations}
+	return []spaces.Space{spaces.Secrets}
 }
 
 func (o *VaultKVV2SecretSetActionOptions) GetRequirements() []string {

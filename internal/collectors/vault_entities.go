@@ -82,6 +82,21 @@ func NewVaultPolicy(policyName string) (*entities.Policy, error) {
 	return entity, nil
 }
 
+func NewVaultSecret(secret api.VaultSecret) (*entities.Secret, error) {
+	secretRef := strings.TrimSpace(secret.Ref)
+	if secretRef == "" {
+		return nil, fmt.Errorf("vault secret ref is required")
+	}
+
+	entity := entities.NewSecret()
+	entity.SecretRef = secretRef
+	entity.Name = strings.TrimSpace(secret.Name)
+	entity.Provider = strings.TrimSpace(secret.Provider)
+	entity.Path = strings.TrimSpace(secret.Path)
+	entity.Type = strings.TrimSpace(secret.Type)
+	return entity, nil
+}
+
 func parseVaultTimestamp(value string) *time.Time {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {

@@ -85,6 +85,97 @@ func TestShouldTreatEmptyVaultListAsNoResults(t *testing.T) {
 	assert.Nil(t, keys)
 }
 
+func TestShouldListVaultMountsUsingSysMountsEndpoint(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, "/v1/sys/mounts", r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"secret/":{"type":"kv","options":{"version":"2"}},"auth/":{"type":"system"}}}`))
+	}))
+	defer server.Close()
+
+	client, err := NewVaultClient(server.Client(), server.URL, "", "test-token")
+	require.NoError(t, err)
+
+	mounts, err := client.ListMounts(context.Background())
+
+	require.NoError(t, err)
+	assert.Equal(t, map[string]VaultMount{
+		"auth":   {Type: "system", Options: nil},
+		"secret": {Type: "kv", Options: map[string]string{"version": "2"}},
+	}, mounts)
+}
+
+func TestShouldListVaultKVV1SecretsRecursivelyWithoutReadingValues(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/sys/mounts/secret":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"type":"kv"}`))
+		case r.Method == "LIST" && r.URL.Path == "/v1/secret":
+			require.Empty(t, r.URL.RawQuery)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"keys":["app/","root"]}}`))
+		case r.Method == "LIST" && r.URL.Path == "/v1/secret/app":
+			require.Empty(t, r.URL.RawQuery)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"keys":["config"]}}`))
+		default:
+			t.Fatalf("unexpected request: %s %s?%s", r.Method, r.URL.Path, r.URL.RawQuery)
+		}
+	}))
+	defer server.Close()
+
+	client, err := NewVaultClient(server.Client(), server.URL, "", "test-token")
+	require.NoError(t, err)
+
+	secrets, err := client.ListKVSecrets(context.Background(), "secret")
+
+	require.NoError(t, err)
+	assert.Equal(t, []VaultSecret{
+		{Ref: "secret/app/config", Name: "config", Provider: "HashiCorp Vault", Path: "app/config", Type: "kv-v1"},
+		{Ref: "secret/root", Name: "root", Provider: "HashiCorp Vault", Path: "root", Type: "kv-v1"},
+	}, secrets)
+}
+
+func TestShouldListVaultKVV2SecretsRecursivelyUsingMetadataPaths(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/v1/sys/mounts/secret":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"type":"kv","options":{"version":"2"}}}`))
+		case r.Method == "LIST" && r.URL.Path == "/v1/secret/metadata":
+			require.Empty(t, r.URL.RawQuery)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"keys":["app/","root"]}}`))
+		case r.Method == "LIST" && r.URL.Path == "/v1/secret/metadata/app":
+			require.Empty(t, r.URL.RawQuery)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"keys":["config"]}}`))
+		default:
+			t.Fatalf("unexpected request: %s %s?%s", r.Method, r.URL.Path, r.URL.RawQuery)
+		}
+	}))
+	defer server.Close()
+
+	client, err := NewVaultClient(server.Client(), server.URL, "", "test-token")
+	require.NoError(t, err)
+
+	secrets, err := client.ListKVSecrets(context.Background(), "secret")
+
+	require.NoError(t, err)
+	assert.Equal(t, []VaultSecret{
+		{Ref: "secret/app/config", Name: "config", Provider: "HashiCorp Vault", Path: "app/config", Type: "kv-v2"},
+		{Ref: "secret/root", Name: "root", Provider: "HashiCorp Vault", Path: "root", Type: "kv-v2"},
+	}, secrets)
+}
+
 func TestShouldWriteVaultKVV1SecretUsingMountMetadata(t *testing.T) {
 	t.Parallel()
 

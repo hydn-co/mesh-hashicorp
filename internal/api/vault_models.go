@@ -18,9 +18,21 @@ type vaultMountResponse struct {
 	Options map[string]string `json:"options"`
 }
 
+type vaultMountsResponse struct {
+	Data map[string]VaultMount `json:"data"`
+}
+
 type VaultMount struct {
 	Type    string            `json:"type"`
 	Options map[string]string `json:"options"`
+}
+
+type VaultSecret struct {
+	Ref      string
+	Name     string
+	Provider string
+	Path     string
+	Type     string
 }
 
 type vaultKVV2WriteOptions struct {

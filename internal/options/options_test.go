@@ -19,6 +19,7 @@ func TestShouldRegisterPolymorphicOptions(t *testing.T) {
 		"mesh://hashicorp/collectors/vault_identity_entity_collector_options":          &VaultIdentityEntityCollectorOptions{},
 		"mesh://hashicorp/collectors/vault_policy_entity_collector_options":            &VaultPolicyEntityCollectorOptions{},
 		"mesh://hashicorp/collectors/vault_auth_method_entity_collector_options":       &VaultAuthMethodEntityCollectorOptions{},
+		"mesh://hashicorp/collectors/vault_secret_entity_collector_options":            &VaultSecretEntityCollectorOptions{},
 		"mesh://hashicorp/actions/terraform_team_provision_action_options":             &TerraformTeamProvisionActionOptions{},
 		"mesh://hashicorp/actions/terraform_workspace_provision_action_options":        &TerraformWorkspaceProvisionActionOptions{},
 		"mesh://hashicorp/actions/terraform_team_membership_assign_action_options":     &TerraformTeamMembershipAssignActionOptions{},

@@ -159,6 +159,21 @@ func WithManifest() *runner.Manifest {
 		log.Fatal(err)
 	}
 
+	if err := manifest.RegisterFeature(
+		"hashicorp_vault_secret_entity_collector",
+		"Collect Vault Secrets",
+		"Collect Vault secret references from KV mounts without reading secret values.",
+		true,
+		runner.FeatureTypeCollector,
+		new(options.VaultSecretEntityCollectorOptions),
+		nil,
+		runner.FeatureResumeBehaviorNone,
+		runner.APIKeyCredential,
+		runner.Factory(entitycollectors.NewVaultSecretEntityCollector),
+	); err != nil {
+		log.Fatal(err)
+	}
+
 	// Register actions
 	if err := manifest.RegisterFeature(
 		"hashicorp_terraform_team_provision_action",

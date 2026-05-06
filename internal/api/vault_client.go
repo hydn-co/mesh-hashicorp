@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
+	"sort"
 	"strings"
 
 	"github.com/hydn-co/mesh-hashicorp/internal/normalization"
@@ -44,7 +46,7 @@ func NewVaultClient(httpClient *http.Client, address string, namespace string, t
 }
 
 func (c *VaultClient) ListIdentityEntityIDs(ctx context.Context) ([]string, error) {
-	return c.listKeys(ctx, "/v1/identity/entity/id")
+	return c.listKeysWithGetQuery(ctx, "/v1/identity/entity/id")
 }
 
 func (c *VaultClient) GetIdentityEntity(ctx context.Context, entityID string) (VaultIdentityEntity, error) {
@@ -62,7 +64,7 @@ func (c *VaultClient) GetIdentityEntity(ctx context.Context, entityID string) (V
 }
 
 func (c *VaultClient) ListIdentityGroupIDs(ctx context.Context) ([]string, error) {
-	return c.listKeys(ctx, "/v1/identity/group/id")
+	return c.listKeysWithGetQuery(ctx, "/v1/identity/group/id")
 }
 
 func (c *VaultClient) GetIdentityGroup(ctx context.Context, groupID string) (VaultIdentityGroup, error) {
@@ -119,6 +121,56 @@ func (c *VaultClient) GetMount(ctx context.Context, mountPath string) (VaultMoun
 		Type:    response.Type,
 		Options: response.Options,
 	}, nil
+}
+
+func (c *VaultClient) ListMounts(ctx context.Context) (map[string]VaultMount, error) {
+	response := vaultMountsResponse{}
+	if err := c.get(ctx, "/v1/sys/mounts", nil, &response); err != nil {
+		return nil, err
+	}
+	if response.Data == nil {
+		return map[string]VaultMount{}, nil
+	}
+
+	mounts := make(map[string]VaultMount, len(response.Data))
+	for mountPath, mount := range response.Data {
+		normalizedMountPath, err := normalization.NormalizeVaultMountPath(mountPath)
+		if err != nil {
+			return nil, fmt.Errorf("normalize vault mount %q: %w", mountPath, err)
+		}
+		mounts[normalizedMountPath] = mount
+	}
+
+	return mounts, nil
+}
+
+func (c *VaultClient) ListKVSecrets(ctx context.Context, mountPath string) ([]VaultSecret, error) {
+	normalizedMountPath, err := normalization.NormalizeVaultMountPath(mountPath)
+	if err != nil {
+		return nil, err
+	}
+
+	mount, err := c.GetMount(ctx, normalizedMountPath)
+	if err != nil {
+		return nil, fmt.Errorf("get vault mount %s: %w", normalizedMountPath, err)
+	}
+	if mount.Type != vaultKVType {
+		return nil, fmt.Errorf("vault mount %s is not a kv secrets engine", normalizedMountPath)
+	}
+
+	version, err := resolveVaultKVVersion(mount)
+	if err != nil {
+		return nil, fmt.Errorf("resolve kv version for mount %s: %w", normalizedMountPath, err)
+	}
+
+	switch version {
+	case vaultKVVersion1:
+		return c.listKVV1Secrets(ctx, normalizedMountPath, "")
+	case vaultKVVersion2:
+		return c.listKVV2Secrets(ctx, normalizedMountPath, "")
+	default:
+		return nil, fmt.Errorf("unsupported vault kv version %s", version)
+	}
 }
 
 func (c *VaultClient) SetKVV1Secret(
@@ -188,11 +240,19 @@ func (c *VaultClient) SetKVV2Secret(
 	return nil
 }
 
-func (c *VaultClient) listKeys(ctx context.Context, path string) ([]string, error) {
+func (c *VaultClient) listKeysWithGetQuery(ctx context.Context, path string) ([]string, error) {
 	query := url.Values{}
 	query.Set("list", "true")
 
-	body, statusCode, status, err := c.doRequest(ctx, http.MethodGet, path, query, nil, "")
+	return c.listKeys(ctx, http.MethodGet, path, query)
+}
+
+func (c *VaultClient) listKeysWithListMethod(ctx context.Context, path string) ([]string, error) {
+	return c.listKeys(ctx, "LIST", path, nil)
+}
+
+func (c *VaultClient) listKeys(ctx context.Context, method string, path string, query url.Values) ([]string, error) {
+	body, statusCode, status, err := c.doRequest(ctx, method, path, query, nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -331,6 +391,110 @@ func escapeVaultPath(path string) string {
 	}
 
 	return strings.Join(segments, "/")
+}
+
+func (c *VaultClient) listKVV1Secrets(ctx context.Context, mountPath string, prefix string) ([]VaultSecret, error) {
+	keys, err := c.listKeysWithListMethod(ctx, buildVaultKVV1ListPath(mountPath, prefix))
+	if err != nil {
+		return nil, err
+	}
+	return c.expandVaultKeys(ctx, mountPath, prefix, vaultKVVersion1, keys)
+}
+
+func (c *VaultClient) listKVV2Secrets(ctx context.Context, mountPath string, prefix string) ([]VaultSecret, error) {
+	keys, err := c.listKeysWithListMethod(ctx, buildVaultKVV2ListPath(mountPath, prefix))
+	if err != nil {
+		return nil, err
+	}
+	return c.expandVaultKeys(ctx, mountPath, prefix, vaultKVVersion2, keys)
+}
+
+func (c *VaultClient) expandVaultKeys(
+	ctx context.Context,
+	mountPath string,
+	prefix string,
+	version string,
+	keys []string,
+) ([]VaultSecret, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	sortedKeys := append([]string(nil), keys...)
+	sort.Strings(sortedKeys)
+
+	secrets := make([]VaultSecret, 0, len(sortedKeys))
+	for _, key := range sortedKeys {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		joinedPath, err := joinVaultSecretPath(prefix, key)
+		if err != nil {
+			return nil, err
+		}
+
+		if strings.HasSuffix(strings.TrimSpace(key), "/") {
+			var nested []VaultSecret
+			switch version {
+			case vaultKVVersion1:
+				nested, err = c.listKVV1Secrets(ctx, mountPath, joinedPath)
+			case vaultKVVersion2:
+				nested, err = c.listKVV2Secrets(ctx, mountPath, joinedPath)
+			default:
+				return nil, fmt.Errorf("unsupported vault kv version %s", version)
+			}
+			if err != nil {
+				return nil, err
+			}
+			secrets = append(secrets, nested...)
+			continue
+		}
+
+		secrets = append(secrets, newVaultSecret(mountPath, joinedPath, version))
+	}
+
+	return secrets, nil
+}
+
+func buildVaultKVV1ListPath(mountPath string, prefix string) string {
+	path := "/v1/" + escapeVaultPath(mountPath)
+	if strings.TrimSpace(prefix) != "" {
+		path += "/" + escapeVaultPath(prefix)
+	}
+	return path
+}
+
+func buildVaultKVV2ListPath(mountPath string, prefix string) string {
+	path := "/v1/" + escapeVaultPath(mountPath) + "/metadata"
+	if strings.TrimSpace(prefix) != "" {
+		path += "/" + escapeVaultPath(prefix)
+	}
+	return path
+}
+
+func joinVaultSecretPath(prefix string, key string) (string, error) {
+	trimmedKey := strings.Trim(strings.TrimSpace(key), "/")
+	if trimmedKey == "" {
+		return "", fmt.Errorf("vault secret list returned empty key")
+	}
+
+	if strings.TrimSpace(prefix) == "" {
+		return normalization.NormalizeVaultSecretPath(trimmedKey)
+	}
+
+	return normalization.NormalizeVaultSecretPath(prefix + "/" + trimmedKey)
+}
+
+func newVaultSecret(mountPath string, secretPath string, version string) VaultSecret {
+	fullPath := mountPath + "/" + secretPath
+	return VaultSecret{
+		Ref:      fullPath,
+		Name:     path.Base(secretPath),
+		Provider: "HashiCorp Vault",
+		Path:     secretPath,
+		Type:     "kv-v" + version,
+	}
 }
 
 func (c *VaultClient) requireKVVersion(ctx context.Context, mountPath string, expectedVersion string) (string, error) {
