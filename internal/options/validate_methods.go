@@ -77,7 +77,14 @@ func (o *VaultAuthMethodEntityCollectorOptions) Validate() error {
 	return validateVaultOptionsCore(&o.VaultOptionsCore)
 }
 
-func (o *VaultIdentityEntityCollectorOptions) Validate() error {
+func (o *VaultIdentityAccountEntityCollectorOptions) Validate() error {
+	if o == nil {
+		return validateVaultOptionsCore(nil)
+	}
+	return validateVaultOptionsCore(&o.VaultOptionsCore)
+}
+
+func (o *VaultIdentityGroupEntityCollectorOptions) Validate() error {
 	if o == nil {
 		return validateVaultOptionsCore(nil)
 	}

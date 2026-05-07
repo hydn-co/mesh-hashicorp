@@ -6,10 +6,10 @@ import (
 )
 
 type VaultKVV2SecretSetPayload struct {
-	MountPath  string          `json:"mount_path"    binding:"required"`
-	SecretPath string          `json:"secret_path"   binding:"required"`
-	Data       json.RawMessage `json:"data"          binding:"required" additionalProperties:"true"`
-	CAS        *int            `json:"cas,omitempty"`
+	MountPath  string          `json:"mount_path"    binding:"required" title:"Mount Path"            description:"The Vault KV v2 mount path that stores the secret."`
+	SecretPath string          `json:"secret_path"   binding:"required" title:"Secret Path"           description:"The path of the secret relative to the KV v2 mount."`
+	Data       json.RawMessage `json:"data"          binding:"required" title:"Secret Data"           description:"A JSON object containing the key-value pairs to write to the secret."                                 additionalProperties:"true"`
+	CAS        *int            `json:"cas,omitempty"                    title:"Check-And-Set Version" description:"Optional optimistic concurrency version. Set to 0 to require that the secret does not already exist."                             minimum:"0"`
 }
 
 func (p *VaultKVV2SecretSetPayload) GetDiscriminator() string {

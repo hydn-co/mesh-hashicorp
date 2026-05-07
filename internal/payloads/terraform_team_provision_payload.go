@@ -6,7 +6,7 @@ import (
 )
 
 type TerraformTeamProvisionPayload struct {
-	Name string `json:"name" binding:"required"`
+	Name string `json:"name" binding:"required" title:"Team Name" description:"The HCP Terraform team name to create."`
 }
 
 func (p *TerraformTeamProvisionPayload) GetDiscriminator() string {

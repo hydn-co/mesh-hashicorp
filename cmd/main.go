@@ -115,16 +115,31 @@ func WithManifest() *runner.Manifest {
 	}
 
 	if err := manifest.RegisterFeature(
-		"hashicorp_vault_identity_entity_collector",
-		"Collect Vault Identity Entities",
-		"Collect Vault identity entities, aliases, groups, and memberships.",
+		"hashicorp_vault_identity_account_entity_collector",
+		"Collect Vault Identity Accounts",
+		"Collect Vault identity entities as accounts.",
 		true,
 		runner.FeatureTypeCollector,
-		new(options.VaultIdentityEntityCollectorOptions),
+		new(options.VaultIdentityAccountEntityCollectorOptions),
 		nil,
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
-		runner.Factory(entitycollectors.NewVaultIdentityEntityCollector),
+		runner.Factory(entitycollectors.NewVaultIdentityAccountEntityCollector),
+	); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := manifest.RegisterFeature(
+		"hashicorp_vault_identity_group_entity_collector",
+		"Collect Vault Identity Groups",
+		"Collect Vault identity groups and memberships.",
+		true,
+		runner.FeatureTypeCollector,
+		new(options.VaultIdentityGroupEntityCollectorOptions),
+		nil,
+		runner.FeatureResumeBehaviorNone,
+		runner.APIKeyCredential,
+		runner.Factory(entitycollectors.NewVaultIdentityGroupEntityCollector),
 	); err != nil {
 		log.Fatal(err)
 	}

@@ -16,19 +16,19 @@ import (
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
 )
 
-func NewVaultIdentityEntityCollector(
-	ctx *connector.TypedFeatureContext[*options.VaultIdentityEntityCollectorOptions, *connector.NoPayload],
+func NewVaultIdentityGroupEntityCollector(
+	ctx *connector.TypedFeatureContext[*options.VaultIdentityGroupEntityCollectorOptions, *connector.NoPayload],
 ) runner.Feature {
-	return &VaultIdentityEntityCollector{TypedFeatureContext: ctx}
+	return &VaultIdentityGroupEntityCollector{TypedFeatureContext: ctx}
 }
 
-type VaultIdentityEntityCollector struct {
+type VaultIdentityGroupEntityCollector struct {
 	state connectorutil.FeatureState
 	token string
-	*connector.TypedFeatureContext[*options.VaultIdentityEntityCollectorOptions, *connector.NoPayload]
+	*connector.TypedFeatureContext[*options.VaultIdentityGroupEntityCollectorOptions, *connector.NoPayload]
 }
 
-func (c *VaultIdentityEntityCollector) Init(_ context.Context) error {
+func (c *VaultIdentityGroupEntityCollector) Init(_ context.Context) error {
 	opts := c.GetOptions()
 	if err := connectorutil.Validate(opts, "feature options"); err != nil {
 		return err
@@ -43,7 +43,7 @@ func (c *VaultIdentityEntityCollector) Init(_ context.Context) error {
 	return nil
 }
 
-func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
+func (c *VaultIdentityGroupEntityCollector) Start(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
 		ctx,
 		c.TypedFeatureContext,
 		slog.LevelInfo,
-		"Starting Vault identity entity collector",
+		"Starting Vault identity group entity collector",
 	)
 	opts := c.GetOptions()
 
@@ -66,44 +66,6 @@ func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf("build vault client: %w", err)
-	}
-
-	entityIDs, err := client.ListIdentityEntityIDs(ctx)
-	if err != nil {
-		return fmt.Errorf("list vault identity entities: %w", err)
-	}
-	sort.Strings(entityIDs)
-
-	if err := enumerators.ForEach(enumerators.Slice(entityIDs), func(entityID string) error {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		if entityID == "" {
-			connectorutil.LogFeature(
-				ctx,
-				c.TypedFeatureContext,
-				slog.LevelWarn,
-				"vault identity entity list returned empty entity id",
-			)
-			return fmt.Errorf("vault identity entity list returned empty entity id")
-		}
-
-		entity, err := client.GetIdentityEntity(ctx, entityID)
-		if err != nil {
-			return fmt.Errorf("read vault identity entity %s: %w", entityID, err)
-		}
-
-		account, err := collectors.NewVaultAccount(entity)
-		if err != nil {
-			return fmt.Errorf("map vault identity entity %s: %w", entityID, err)
-		}
-		if err := c.Emit(ctx, account); err != nil {
-			return fmt.Errorf("emit account %s: %w", account.AccountRef, err)
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("enumerate vault identity entities: %w", err)
 	}
 
 	groupIDs, err := client.ListIdentityGroupIDs(ctx)
@@ -140,6 +102,9 @@ func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
 		}
 
 		if err := enumerators.ForEach(enumerators.Slice(group.MemberEntityIDs), func(memberEntityID string) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			if memberEntityID == "" {
 				connectorutil.LogFeature(
 					ctx,
@@ -182,12 +147,12 @@ func (c *VaultIdentityEntityCollector) Start(ctx context.Context) error {
 		ctx,
 		c.TypedFeatureContext,
 		slog.LevelInfo,
-		"Finished Vault identity entity collector",
+		"Finished Vault identity group entity collector",
 	)
 	return nil
 }
 
-func (c *VaultIdentityEntityCollector) Stop(ctx context.Context) error {
+func (c *VaultIdentityGroupEntityCollector) Stop(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -198,7 +163,7 @@ func (c *VaultIdentityEntityCollector) Stop(ctx context.Context) error {
 		ctx,
 		c.TypedFeatureContext,
 		slog.LevelInfo,
-		"Stopping Vault identity entity collector",
+		"Stopping Vault identity group entity collector",
 	)
 	c.state.Reset()
 	c.token = ""

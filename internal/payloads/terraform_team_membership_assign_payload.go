@@ -6,8 +6,8 @@ import (
 )
 
 type TerraformTeamMembershipAssignPayload struct {
-	TeamID string `json:"team_id" binding:"required"`
-	UserID string `json:"user_id" binding:"required"`
+	TeamID string `json:"team_id" binding:"required" title:"Team ID" description:"The HCP Terraform team ID that will receive the membership."`
+	UserID string `json:"user_id" binding:"required" title:"User ID" description:"The HCP Terraform user ID to assign to the team."`
 }
 
 func (p *TerraformTeamMembershipAssignPayload) GetDiscriminator() string {

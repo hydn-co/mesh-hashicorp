@@ -6,9 +6,9 @@ import (
 )
 
 type TerraformTeamAccessAssignPayload struct {
-	TeamID      string `json:"team_id"      binding:"required"`
-	WorkspaceID string `json:"workspace_id" binding:"required"`
-	Access      string `json:"access"       binding:"required"`
+	TeamID      string `json:"team_id"      binding:"required" title:"Team ID"      description:"The HCP Terraform team ID receiving the workspace access."`
+	WorkspaceID string `json:"workspace_id" binding:"required" title:"Workspace ID" description:"The HCP Terraform workspace ID where access will be assigned."`
+	Access      string `json:"access"       binding:"required" title:"Access Level" description:"The Terraform access level to grant, such as read, plan, write, or admin."`
 }
 
 func (p *TerraformTeamAccessAssignPayload) GetDiscriminator() string {

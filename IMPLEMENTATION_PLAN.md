@@ -340,11 +340,16 @@ Add the highest-value Vault write actions on top of the Vault entity coverage al
 
 ### Planned Entity Collectors
 
-#### `hashicorp_vault_identity_entity_collector`
+#### `hashicorp_vault_identity_account_entity_collector`
 
-Collect Vault identity entities, aliases, and groups and emit:
+Collect Vault identity entities and emit:
 
 - `Account`
+
+#### `hashicorp_vault_identity_group_entity_collector`
+
+Collect Vault identity groups and memberships and emit:
+
 - `Group`
 - `GroupMember`
 
