@@ -30,8 +30,8 @@ func validateTerraformOptionsCore(o *TerraformOptionsCore) error {
 }
 
 type VaultOptionsCore struct {
-	Address   string `json:"address"             title:"Address"   description:"Vault base URL."                binding:"required"`
-	Namespace string `json:"namespace,omitempty" title:"Namespace" description:"Vault namespace when required."`
+	Address   string `json:"address"             title:"Address"   description:"Vault base URL."           binding:"required"`
+	Namespace string `json:"namespace,omitempty" title:"Namespace" description:"Optional Vault namespace."`
 }
 
 func (o *VaultOptionsCore) GetAddress() string {

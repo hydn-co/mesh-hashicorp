@@ -8,6 +8,7 @@ import (
 	entitycollectors "github.com/hydn-co/mesh-hashicorp/internal/collectors/entity"
 	"github.com/hydn-co/mesh-hashicorp/internal/options"
 	"github.com/hydn-co/mesh-hashicorp/internal/payloads"
+	"github.com/hydn-co/mesh-sdk/pkg/connector"
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
 )
 
@@ -24,261 +25,227 @@ func WithManifest() *runner.Manifest {
 	)
 
 	// Register collectors
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_account_entity_collector",
-		"Collect HCP Terraform Accounts",
-		"Collect HCP Terraform organization users.",
-		true,
+		"Collect Terraform Accounts",
+		"Collect Terraform organization users.",
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.TerraformAccountEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewTerraformAccountEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_team_entity_collector",
-		"Collect HCP Terraform Teams",
-		"Collect HCP Terraform teams and memberships.",
-		true,
+		"Collect Terraform Teams",
+		"Collect Terraform teams and memberships.",
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.TerraformTeamEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewTerraformTeamEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_workspace_entity_collector",
-		"Collect HCP Terraform Workspaces",
-		"Collect HCP Terraform workspaces as applications.",
-		true,
+		"Collect Terraform Workspaces",
+		"Collect Terraform workspaces as applications.",
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.TerraformWorkspaceEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewTerraformWorkspaceEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_policy_entity_collector",
-		"Collect HCP Terraform Policies",
-		"Collect HCP Terraform policy sets and policies.",
-		true,
+		"Collect Terraform Policies",
+		"Collect Terraform policy sets and policies.",
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.TerraformPolicyEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewTerraformPolicyEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_team_access_entity_collector",
-		"Collect HCP Terraform Team Access",
-		"Collect HCP Terraform workspace access as permissions and group-permission links.",
-		true,
+		"Collect Terraform Team Access",
+		"Collect Terraform workspace access as permissions and group-permission links.",
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.TerraformTeamAccessEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewTerraformTeamAccessEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_audit_trail_activity_collector",
-		"Collect HCP Terraform Audit Activity",
-		"Collect HCP Terraform audit trail activity.",
-		true,
+		"Collect Terraform Audit Activity",
+		"Collect Terraform audit trail activity.",
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.TerraformAuditTrailActivityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorLastActivity,
 		runner.APIKeyCredential,
 		runner.Factory(activitycollectors.NewTerraformAuditTrailActivityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_vault_identity_account_entity_collector",
-		"Collect Vault Identity Accounts",
+		"Collect Vault Accounts",
 		"Collect Vault identity entities as accounts.",
-		true,
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.VaultIdentityAccountEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewVaultIdentityAccountEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_vault_identity_group_entity_collector",
-		"Collect Vault Identity Groups",
+		"Collect Vault Groups",
 		"Collect Vault identity groups and memberships.",
-		true,
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.VaultIdentityGroupEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewVaultIdentityGroupEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_vault_policy_entity_collector",
 		"Collect Vault Policies",
 		"Collect Vault policies.",
-		true,
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.VaultPolicyEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewVaultPolicyEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_vault_auth_method_entity_collector",
 		"Collect Vault Auth Methods",
 		"Collect Vault auth methods as applications.",
-		true,
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.VaultAuthMethodEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewVaultAuthMethodEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_vault_secret_entity_collector",
 		"Collect Vault Secrets",
 		"Collect Vault secret references from KV mounts without reading secret values.",
-		true,
+		runner.FeatureSchedulable,
 		runner.FeatureTypeCollector,
 		new(options.VaultSecretEntityCollectorOptions),
-		nil,
+		(*connector.NoPayload)(nil),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(entitycollectors.NewVaultSecretEntityCollector),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
 	// Register actions
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_team_provision_action",
-		"Provision HCP Terraform Team",
-		"Create an HCP Terraform team.",
-		false,
+		"Provision Terraform Team",
+		"Create a Terraform team.",
+		runner.FeatureUnschedulable,
 		runner.FeatureTypeAction,
 		new(options.TerraformTeamProvisionActionOptions),
 		new(payloads.TerraformTeamProvisionPayload),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(actions.NewTerraformTeamProvisionAction),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_workspace_provision_action",
-		"Provision HCP Terraform Workspace",
-		"Create an HCP Terraform workspace.",
-		false,
+		"Provision Terraform Workspace",
+		"Create a Terraform workspace.",
+		runner.FeatureUnschedulable,
 		runner.FeatureTypeAction,
 		new(options.TerraformWorkspaceProvisionActionOptions),
 		new(payloads.TerraformWorkspaceProvisionPayload),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(actions.NewTerraformWorkspaceProvisionAction),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_team_membership_assign_action",
-		"Assign User To HCP Terraform Team",
-		"Assign an HCP Terraform user to a team.",
-		false,
+		"Add User To Terraform Team",
+		"Assign a Terraform user to a team.",
+		runner.FeatureUnschedulable,
 		runner.FeatureTypeAction,
 		new(options.TerraformTeamMembershipAssignActionOptions),
 		new(payloads.TerraformTeamMembershipAssignPayload),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(actions.NewTerraformTeamMembershipAssignAction),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_terraform_team_access_assign_action",
-		"Assign HCP Terraform Team Access",
-		"Assign an HCP Terraform team permission to a workspace.",
-		false,
+		"Assign Terraform Team Access",
+		"Assign a Terraform team permission to a workspace.",
+		runner.FeatureUnschedulable,
 		runner.FeatureTypeAction,
 		new(options.TerraformTeamAccessAssignActionOptions),
 		new(payloads.TerraformTeamAccessAssignPayload),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(actions.NewTerraformTeamAccessAssignAction),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_vault_kv_v1_secret_set_action",
-		"Set Vault KV v1 Secret",
+		"Upsert v1 vault secret",
 		"Create or update a Vault KV v1 secret.",
-		false,
+		runner.FeatureUnschedulable,
 		runner.FeatureTypeAction,
 		new(options.VaultKVV1SecretSetActionOptions),
 		new(payloads.VaultKVV1SecretSetPayload),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(actions.NewVaultKVV1SecretSetAction),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
-	if err := manifest.RegisterFeature(
+	manifest.MustRegisterFeature(
 		"hashicorp_vault_kv_v2_secret_set_action",
-		"Set Vault KV v2 Secret",
+		"Upsert v2 vault secret",
 		"Create or update a Vault KV v2 secret.",
-		false,
+		runner.FeatureUnschedulable,
 		runner.FeatureTypeAction,
 		new(options.VaultKVV2SecretSetActionOptions),
 		new(payloads.VaultKVV2SecretSetPayload),
 		runner.FeatureResumeBehaviorNone,
 		runner.APIKeyCredential,
 		runner.Factory(actions.NewVaultKVV2SecretSetAction),
-	); err != nil {
-		log.Fatal(err)
-	}
+	)
 
 	if err := manifest.Validate(); err != nil {
 		log.Fatal(err)
