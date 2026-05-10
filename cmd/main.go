@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"strconv"
 
 	"github.com/hydn-co/mesh-hashicorp/internal/actions"
 	activitycollectors "github.com/hydn-co/mesh-hashicorp/internal/collectors/activity"
@@ -12,11 +14,18 @@ import (
 	"github.com/hydn-co/mesh-sdk/pkg/runner"
 )
 
+var experimentalFlagString string = os.Getenv("MESH_CONNECTOR_ALPHA_FUNCTIONS_ENABLED")
+
 func main() {
 	runner.Run(WithManifest())
 }
 
 func WithManifest() *runner.Manifest {
+	experimentalFlag, err := strconv.ParseBool(experimentalFlagString)
+	if err != nil {
+		experimentalFlag = false
+	}
+
 	manifest := runner.CreateManifest(
 		"mesh-hashicorp",
 		"",
@@ -24,85 +33,88 @@ func WithManifest() *runner.Manifest {
 		"Mesh integration with HashiCorp",
 	)
 
-	// Register collectors
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_account_entity_collector",
-		"Collect Terraform Accounts",
-		"Collect Terraform organization users.",
-		runner.FeatureSchedulable,
-		runner.FeatureTypeCollector,
-		new(options.TerraformAccountEntityCollectorOptions),
-		(*connector.NoPayload)(nil),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(entitycollectors.NewTerraformAccountEntityCollector),
-	)
+	if experimentalFlag {
+		// Register terraform collectors
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_account_entity_collector",
+			"Collect Terraform Accounts",
+			"Collect Terraform organization users.",
+			runner.FeatureSchedulable,
+			runner.FeatureTypeCollector,
+			new(options.TerraformAccountEntityCollectorOptions),
+			(*connector.NoPayload)(nil),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(entitycollectors.NewTerraformAccountEntityCollector),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_team_entity_collector",
-		"Collect Terraform Teams",
-		"Collect Terraform teams and memberships.",
-		runner.FeatureSchedulable,
-		runner.FeatureTypeCollector,
-		new(options.TerraformTeamEntityCollectorOptions),
-		(*connector.NoPayload)(nil),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(entitycollectors.NewTerraformTeamEntityCollector),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_team_entity_collector",
+			"Collect Terraform Teams",
+			"Collect Terraform teams and memberships.",
+			runner.FeatureSchedulable,
+			runner.FeatureTypeCollector,
+			new(options.TerraformTeamEntityCollectorOptions),
+			(*connector.NoPayload)(nil),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(entitycollectors.NewTerraformTeamEntityCollector),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_workspace_entity_collector",
-		"Collect Terraform Workspaces",
-		"Collect Terraform workspaces as applications.",
-		runner.FeatureSchedulable,
-		runner.FeatureTypeCollector,
-		new(options.TerraformWorkspaceEntityCollectorOptions),
-		(*connector.NoPayload)(nil),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(entitycollectors.NewTerraformWorkspaceEntityCollector),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_workspace_entity_collector",
+			"Collect Terraform Workspaces",
+			"Collect Terraform workspaces as applications.",
+			runner.FeatureSchedulable,
+			runner.FeatureTypeCollector,
+			new(options.TerraformWorkspaceEntityCollectorOptions),
+			(*connector.NoPayload)(nil),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(entitycollectors.NewTerraformWorkspaceEntityCollector),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_policy_entity_collector",
-		"Collect Terraform Policies",
-		"Collect Terraform policy sets and policies.",
-		runner.FeatureSchedulable,
-		runner.FeatureTypeCollector,
-		new(options.TerraformPolicyEntityCollectorOptions),
-		(*connector.NoPayload)(nil),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(entitycollectors.NewTerraformPolicyEntityCollector),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_policy_entity_collector",
+			"Collect Terraform Policies",
+			"Collect Terraform policy sets and policies.",
+			runner.FeatureSchedulable,
+			runner.FeatureTypeCollector,
+			new(options.TerraformPolicyEntityCollectorOptions),
+			(*connector.NoPayload)(nil),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(entitycollectors.NewTerraformPolicyEntityCollector),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_team_access_entity_collector",
-		"Collect Terraform Team Access",
-		"Collect Terraform workspace access as permissions and group-permission links.",
-		runner.FeatureSchedulable,
-		runner.FeatureTypeCollector,
-		new(options.TerraformTeamAccessEntityCollectorOptions),
-		(*connector.NoPayload)(nil),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(entitycollectors.NewTerraformTeamAccessEntityCollector),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_team_access_entity_collector",
+			"Collect Terraform Team Access",
+			"Collect Terraform workspace access as permissions and group-permission links.",
+			runner.FeatureSchedulable,
+			runner.FeatureTypeCollector,
+			new(options.TerraformTeamAccessEntityCollectorOptions),
+			(*connector.NoPayload)(nil),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(entitycollectors.NewTerraformTeamAccessEntityCollector),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_audit_trail_activity_collector",
-		"Collect Terraform Audit Activity",
-		"Collect Terraform audit trail activity.",
-		runner.FeatureSchedulable,
-		runner.FeatureTypeCollector,
-		new(options.TerraformAuditTrailActivityCollectorOptions),
-		(*connector.NoPayload)(nil),
-		runner.FeatureResumeBehaviorLastActivity,
-		runner.APIKeyCredential,
-		runner.Factory(activitycollectors.NewTerraformAuditTrailActivityCollector),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_audit_trail_activity_collector",
+			"Collect Terraform Audit Activity",
+			"Collect Terraform audit trail activity.",
+			runner.FeatureSchedulable,
+			runner.FeatureTypeCollector,
+			new(options.TerraformAuditTrailActivityCollectorOptions),
+			(*connector.NoPayload)(nil),
+			runner.FeatureResumeBehaviorLastActivity,
+			runner.APIKeyCredential,
+			runner.Factory(activitycollectors.NewTerraformAuditTrailActivityCollector),
+		)
+	}
 
+	// Register vault collectors
 	manifest.MustRegisterFeature(
 		"hashicorp_vault_identity_account_entity_collector",
 		"Collect Vault Accounts",
@@ -168,59 +180,62 @@ func WithManifest() *runner.Manifest {
 		runner.Factory(entitycollectors.NewVaultSecretEntityCollector),
 	)
 
-	// Register actions
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_team_provision_action",
-		"Provision Terraform Team",
-		"Create a Terraform team.",
-		runner.FeatureUnschedulable,
-		runner.FeatureTypeAction,
-		new(options.TerraformTeamProvisionActionOptions),
-		new(payloads.TerraformTeamProvisionPayload),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(actions.NewTerraformTeamProvisionAction),
-	)
+	if experimentalFlag {
+		// Register terraform actions
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_team_provision_action",
+			"Provision Terraform Team",
+			"Create a Terraform team.",
+			runner.FeatureUnschedulable,
+			runner.FeatureTypeAction,
+			new(options.TerraformTeamProvisionActionOptions),
+			new(payloads.TerraformTeamProvisionPayload),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(actions.NewTerraformTeamProvisionAction),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_workspace_provision_action",
-		"Provision Terraform Workspace",
-		"Create a Terraform workspace.",
-		runner.FeatureUnschedulable,
-		runner.FeatureTypeAction,
-		new(options.TerraformWorkspaceProvisionActionOptions),
-		new(payloads.TerraformWorkspaceProvisionPayload),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(actions.NewTerraformWorkspaceProvisionAction),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_workspace_provision_action",
+			"Provision Terraform Workspace",
+			"Create a Terraform workspace.",
+			runner.FeatureUnschedulable,
+			runner.FeatureTypeAction,
+			new(options.TerraformWorkspaceProvisionActionOptions),
+			new(payloads.TerraformWorkspaceProvisionPayload),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(actions.NewTerraformWorkspaceProvisionAction),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_team_membership_assign_action",
-		"Add User To Terraform Team",
-		"Assign a Terraform user to a team.",
-		runner.FeatureUnschedulable,
-		runner.FeatureTypeAction,
-		new(options.TerraformTeamMembershipAssignActionOptions),
-		new(payloads.TerraformTeamMembershipAssignPayload),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(actions.NewTerraformTeamMembershipAssignAction),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_team_membership_assign_action",
+			"Add User To Terraform Team",
+			"Assign a Terraform user to a team.",
+			runner.FeatureUnschedulable,
+			runner.FeatureTypeAction,
+			new(options.TerraformTeamMembershipAssignActionOptions),
+			new(payloads.TerraformTeamMembershipAssignPayload),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(actions.NewTerraformTeamMembershipAssignAction),
+		)
 
-	manifest.MustRegisterFeature(
-		"hashicorp_terraform_team_access_assign_action",
-		"Assign Terraform Team Access",
-		"Assign a Terraform team permission to a workspace.",
-		runner.FeatureUnschedulable,
-		runner.FeatureTypeAction,
-		new(options.TerraformTeamAccessAssignActionOptions),
-		new(payloads.TerraformTeamAccessAssignPayload),
-		runner.FeatureResumeBehaviorNone,
-		runner.APIKeyCredential,
-		runner.Factory(actions.NewTerraformTeamAccessAssignAction),
-	)
+		manifest.MustRegisterFeature(
+			"hashicorp_terraform_team_access_assign_action",
+			"Assign Terraform Team Access",
+			"Assign a Terraform team permission to a workspace.",
+			runner.FeatureUnschedulable,
+			runner.FeatureTypeAction,
+			new(options.TerraformTeamAccessAssignActionOptions),
+			new(payloads.TerraformTeamAccessAssignPayload),
+			runner.FeatureResumeBehaviorNone,
+			runner.APIKeyCredential,
+			runner.Factory(actions.NewTerraformTeamAccessAssignAction),
+		)
+	}
 
+	// Register vault actions
 	manifest.MustRegisterFeature(
 		"hashicorp_vault_kv_v1_secret_set_action",
 		"Upsert v1 vault secret",

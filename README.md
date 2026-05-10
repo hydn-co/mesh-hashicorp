@@ -10,6 +10,8 @@ Current bootstrap scope:
 - Vault entity collectors
 - Vault audit deferred
 
+Terraform features are behind `MESH_CONNECTOR_ALPHA_FUNCTIONS_ENABLED`; Vault features remain available by default.
+
 The repository is bootstrapped to match the current modular connector structure used by `mesh-azure`:
 
 - one option type per file under `internal/options/`
