@@ -5,14 +5,14 @@ go 1.25.6
 require (
 	github.com/fgrzl/enumerators v1.0.0
 	github.com/fgrzl/json v1.0.0
-	github.com/hydn-co/mesh-sdk v0.2.55
+	github.com/hydn-co/mesh-sdk v0.2.60
 	github.com/stretchr/testify v1.11.1
 )
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fgrzl/es v1.0.0 // indirect
+	github.com/fgrzl/es v1.0.1 // indirect
 	github.com/fgrzl/timestamp v1.0.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
